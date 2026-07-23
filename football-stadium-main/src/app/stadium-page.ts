@@ -15,6 +15,7 @@ import {
   initStadium,
   otherStadiumId,
   resolveStadiumIdFromRoute,
+  stadiumRouteSlug,
 } from './stadium/stadium.engine.js';
 
 @Component({
@@ -60,7 +61,7 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
           otherStadiumId(
             resolveStadiumIdFromRoute(this.route.snapshot.paramMap.get('id')),
           );
-        void this.router.navigate(['/stadium', target]);
+        void this.router.navigate(['/stadium', stadiumRouteSlug(target)]);
       };
       btn.addEventListener('click', onClick);
       this.cleanupUi.push(() => btn.removeEventListener('click', onClick));
@@ -82,11 +83,15 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
     try {
       await initStadium(id);
       const active = getActiveStadiumId();
-      const routeId = resolveStadiumIdFromRoute(
-        this.route.snapshot.paramMap.get('id'),
-      );
-      if (active && active !== routeId) {
-        await this.router.navigate(['/stadium', active], {
+      const routeSlug = this.route.snapshot.paramMap.get('id');
+      const routeId = resolveStadiumIdFromRoute(routeSlug);
+      const canonicalSlug = active ? stadiumRouteSlug(active) : null;
+      if (
+        active &&
+        canonicalSlug &&
+        (active !== routeId || routeSlug !== canonicalSlug)
+      ) {
+        await this.router.navigate(['/stadium', canonicalSlug], {
           replaceUrl: true,
         });
       }

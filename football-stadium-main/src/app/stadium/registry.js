@@ -23,6 +23,11 @@ export const STADIUM_LOADERS = {
   cairo: () => import('./stadiums/cairo.engine.js'),
 };
 
+const STADIUM_ROUTE_SLUGS = {
+  misr: 'NewAdministrativeCapital',
+  cairo: 'cairo',
+};
+
 /** Static catalog used by the UI before modules load */
 export const STADIUM_CATALOG = [
   {
@@ -47,7 +52,7 @@ export const STADIUM_CATALOG = [
   },
 ];
 
-export const DEFAULT_STADIUM_ID = 'misr';
+export const DEFAULT_STADIUM_ID = 'cairo';
 
 export function getStadiumMeta(id) {
   return (
@@ -58,8 +63,13 @@ export function getStadiumMeta(id) {
 
 export function resolveStadiumId(raw) {
   const id = (raw || '').toString().trim().toLowerCase();
+  if (id === 'newadministrativecapital') return 'misr';
   if (id && STADIUM_LOADERS[id]) return id;
   return DEFAULT_STADIUM_ID;
+}
+
+export function stadiumRouteSlug(id) {
+  return STADIUM_ROUTE_SLUGS[resolveStadiumId(id)];
 }
 
 /** The other stadium in the Misr ↔ Cairo pair */

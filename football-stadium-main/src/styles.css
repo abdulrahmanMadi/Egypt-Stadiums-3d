@@ -428,6 +428,23 @@ body.stadium-draft #rightcol {
   flex: none;
   color: var(--accent-2);
 }
+.site-credit {
+  position: fixed;
+  right: 24px;
+  bottom: 12px;
+  z-index: 16;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.68);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.75);
+}
+.site-credit a {
+  color: #fff;
+  text-decoration: none;
+}
+.site-credit a:hover {
+  text-decoration: underline;
+}
 
 /* ---------- right column ---------- */
 #rightcol {
@@ -867,6 +884,9 @@ body.stadium-draft #rightcol {
   }
   .brand-name {
     font-size: 14px;
+  }
+  .site-credit {
+    right: 14px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

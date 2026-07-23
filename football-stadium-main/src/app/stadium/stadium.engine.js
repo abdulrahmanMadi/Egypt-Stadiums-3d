@@ -3,6 +3,7 @@ import {
   getStadiumMeta,
   otherStadiumId,
   resolveStadiumId,
+  stadiumRouteSlug,
   STADIUM_CATALOG,
   STADIUM_LOADERS,
 } from './registry.js';
@@ -12,6 +13,7 @@ export {
   getStadiumMeta,
   otherStadiumId,
   resolveStadiumId,
+  stadiumRouteSlug,
 };
 
 let active = null;
