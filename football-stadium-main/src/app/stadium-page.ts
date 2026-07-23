@@ -82,6 +82,7 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
     if (btn) btn.disabled = true;
     try {
       await initStadium(id);
+      if (seq !== this.loadSeq) return;
       const active = getActiveStadiumId();
       const routeSlug = this.route.snapshot.paramMap.get('id');
       const routeId = resolveStadiumIdFromRoute(routeSlug);

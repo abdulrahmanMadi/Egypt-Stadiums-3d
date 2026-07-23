@@ -166,6 +166,8 @@ export async function initStadium(stadiumId = DEFAULT_STADIUM_ID) {
     const loaderFn = STADIUM_LOADERS[id];
     if (!loaderFn) throw new Error(`Unknown stadium: ${id}`);
     const mod = await loaderFn();
+    // Paint the loader before synchronous geometry and crowd construction.
+    await new Promise((resolve) => requestAnimationFrame(resolve));
     try {
       const handle = mod.createStadium({
         meta: { ...meta, ...mod.stadiumMeta },

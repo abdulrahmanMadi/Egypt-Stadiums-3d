@@ -118,7 +118,7 @@ export function createStadium(opts = {}) {
     powerPreference: 'high-performance',
   });
   renderer.shadowMap.enabled = false;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setSize(innerWidth, innerHeight);
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1541,7 +1541,8 @@ export function createStadium(opts = {}) {
               seat: i + 1,
               sec: s,
               label: (tier === 0 ? 101 : 201) + s,
-              occ: true, // every seat filled — complete crowd
+              // Keep the bowl lively without building a fan for every seat.
+              occ: rng() < 0.72,
             });
           }
         }
@@ -2393,6 +2394,7 @@ export function createStadium(opts = {}) {
           loadBuffer('stadium', SFX.stadium),
           loadBuffer('chant', SFX.chant),
         ]);
+        if (disposed || !AC || AC.state === 'closed') return;
 
         // Distant bed: pure crowd ambience only
         playBuffer('ambience', {
@@ -3673,6 +3675,7 @@ export function createStadium(opts = {}) {
 
   const clock = new THREE.Clock();
   let firstFrame = true;
+  let lastUiDraw = 0;
   function animate() {
     if (disposed) return;
     rafId = requestAnimationFrame(animate);
@@ -3713,19 +3716,15 @@ export function createStadium(opts = {}) {
       camera.lookAt(look);
     }
 
-    drawMiniMap();
-    drawOverview();
+    if (now - lastUiDraw >= 100) {
+      lastUiDraw = now;
+      drawMiniMap();
+      drawOverview();
+    }
     renderer.render(scene, camera);
     if (firstFrame) {
       firstFrame = false;
       if (loader) loader.classList.add('hide');
-      if (currentInfo) {
-        setTimeout(() => {
-          try {
-            captureView(currentInfo.i);
-          } catch (_) {}
-        }, 60);
-      }
       toast(
         'Cairo International · click a seat for spectator view',
         4000,
@@ -3742,6 +3741,7 @@ export function createStadium(opts = {}) {
       disposed = true;
       cancelAnimationFrame(rafId);
       if (whoopTimer) clearTimeout(whoopTimer);
+      if (toastTimer) clearTimeout(toastTimer);
       try {
         if (AC && AC.state !== 'closed') AC.close();
       } catch (_) {}
@@ -3749,6 +3749,8 @@ export function createStadium(opts = {}) {
       crowdMaster = null;
       ambGain = cheerGain = null;
       audioReady = false;
+      audioLoading = null;
+      Object.keys(buffers).forEach((key) => delete buffers[key]);
       try {
         gsap.killTweensOf('*');
       } catch (_) {}
@@ -3756,6 +3758,18 @@ export function createStadium(opts = {}) {
         matchPlay.dispose();
       } catch (_) {}
       pickRT.dispose();
+      if (seatSys?.pickScene) {
+        seatSys.pickScene.traverse((obj) => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            const mats = Array.isArray(obj.material)
+              ? obj.material
+              : [obj.material];
+            mats.forEach((m) => m?.dispose());
+          }
+        });
+        seatSys.pickScene.clear();
+      }
       disposers.forEach((fn) => {
         try {
           fn();
@@ -3775,6 +3789,7 @@ export function createStadium(opts = {}) {
         }
       });
       renderer.dispose();
+      renderer.forceContextLoss();
       canvas.classList.remove('dragging', 'seatmode');
       if (ui.dock) ui.dock.classList.remove('hidden');
       if (ui.backbar) ui.backbar.classList.remove('show');

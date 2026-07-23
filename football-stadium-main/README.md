@@ -1,8 +1,9 @@
 # Egypt Stadiums 3D
 
 An interactive, procedural 3D football-stadium experience built with Angular,
-Three.js, and GSAP. Explore Misr Stadium and Cairo International Stadium,
-orbit around each venue, preview seats, and watch an animated passing match.
+Three.js, and GSAP. Explore the New Administrative Capital Stadium and Cairo
+International Stadium, orbit around each venue, preview seats, and watch an
+animated passing match.
 
 This repository is a modified and expanded derivative of
 [StadiView by thebuggeddev](https://github.com/thebuggeddev/football-stadium).
@@ -14,17 +15,36 @@ other modifications in this repository are maintained by
 [![Three.js](https://img.shields.io/badge/Three.js-r128-000?logo=threedotjs)](https://threejs.org/)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue)](LICENSE)
 
-![Misr Stadium preview](public/previews/misr.jpg)
+## Screenshots
 
-![Cairo International Stadium preview](public/previews/cairo.jpg)
+### Cairo International Stadium
+
+![Cairo International Stadium orbit view](public/previews/cairo-orbit.png)
+
+![Cairo International Stadium seat view](public/previews/cairo-seat-view.png)
+
+### New Administrative Capital Stadium
+
+![New Administrative Capital Stadium orbit view](public/previews/new-administrative-capital-orbit.png)
+
+![New Administrative Capital Stadium seat view](public/previews/new-administrative-capital-seat-view.png)
 
 ## Features
 
-- Two detailed procedural stadiums: Misr and Cairo International.
-- Free orbit, zoom, camera overview, and spectator seat views.
-- Thousands of generated seats and animated supporters.
-- Animated football players with formation-based positioning and passing.
-- Stadium ambience, crowd reactions, scoreboards, floodlights, and surroundings.
+- Two detailed procedural venues: Cairo International Stadium and the New
+  Administrative Capital Stadium.
+- Free orbit, touch and wheel zoom, camera reset, minimap, and stadium overview.
+- Thousands of generated seats with GPU picking, section metadata, view ratings,
+  preview thumbnails, and animated first-person transitions.
+- Animated supporters rendered with instanced meshes and venue-specific colors.
+- Passing-focused football simulation with role-based positioning, build-up
+  play, interceptions, defensive pressure, and automatic possession turnovers.
+- Perspective-aware stadium sound: crowd ambience in orbit mode and stronger
+  chants and reactions from the spectator view.
+- Procedural scoreboards, floodlights, running tracks, tunnels, dugouts, roads,
+  trees, exterior architecture, and technical areas.
+- Lazy-loaded stadium engines: only the selected venue is created, while the
+  previous WebGL scene and audio resources are disposed during switching.
 - Responsive desktop and mobile controls.
 - No external API, backend, account, or secret configuration required.
 

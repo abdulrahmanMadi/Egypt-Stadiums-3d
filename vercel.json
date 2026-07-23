@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm --prefix football-stadium-main ci --include=dev",
+  "buildCommand": "npm --prefix football-stadium-main run build",
+  "outputDirectory": "football-stadium-main/dist/football-stadium/browser",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

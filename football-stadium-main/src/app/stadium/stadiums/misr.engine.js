@@ -54,9 +54,8 @@ export function createStadium(opts = {}) {
         powerPreference: "high-performance",
         logarithmicDepthBuffer: true,
       });
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = false;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
       renderer.setSize(innerWidth, innerHeight);
       renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -102,7 +101,7 @@ export function createStadium(opts = {}) {
       scene.add(fieldGlow);
       const sun = new THREE.DirectionalLight(0xdfe9ff, 0.3);
       sun.position.set(70, 90, 45);
-      sun.castShadow = true;
+      sun.castShadow = false;
       sun.shadow.mapSize.set(1024, 1024);
       sun.shadow.camera.left = -110;
       sun.shadow.camera.right = 110;
@@ -3566,6 +3565,7 @@ export function createStadium(opts = {}) {
               loadBuffer("stadium", SFX.stadium),
               loadBuffer("chant", SFX.chant),
             ]);
+            if (disposed || !AC || AC.state === "closed") return;
 
             const bed = AC.createGain();
             bed.gain.value = 1;
@@ -3598,7 +3598,7 @@ export function createStadium(opts = {}) {
       function scheduleWhoops() {
         if (whoopTimer) clearTimeout(whoopTimer);
         const tick = () => {
-          if (!AC || muted || !audioReady) return;
+          if (!AC || muted || !audioReady || disposed) return;
           fireWhoop();
           whoopTimer = setTimeout(tick, 3800 + Math.random() * 6500);
         };
@@ -4429,15 +4429,16 @@ export function createStadium(opts = {}) {
         const pr = renderer.getPixelRatio();
         if (fps < 40 && pr > 0.75)
           renderer.setPixelRatio(Math.max(0.75, pr - 0.25));
-        else if (fps > 75 && pr < Math.min(2, window.devicePixelRatio))
+        else if (fps > 75 && pr < Math.min(1.5, window.devicePixelRatio))
           renderer.setPixelRatio(
-            Math.min(2, window.devicePixelRatio, pr + 0.25),
+            Math.min(1.5, window.devicePixelRatio, pr + 0.25),
           );
       }
 
       /* ---------- main loop ---------- */
       const clock = new THREE.Clock();
       let firstFrame = true;
+      let lastUiDraw = 0;
       function animate() {
         if (disposed) return;
         rafId = requestAnimationFrame(animate);
@@ -4484,17 +4485,17 @@ export function createStadium(opts = {}) {
           const gs = 2.3 + 0.35 * Math.sin(t * 2.6);
           selGlow.scale.set(gs, gs, 1);
         } else selGlow.material.opacity = 0;
-        drawMiniMap();
-        drawOverview();
+        if (now - lastUiDraw >= 100) {
+          lastUiDraw = now;
+          drawMiniMap();
+          drawOverview();
+        }
         adaptQuality(dt, now);
         renderer.render(scene, camera);
         if (firstFrame) {
           firstFrame = false;
-          setTimeout(() => {
-            captureView(featuredIdx);
-            document.getElementById("loader").classList.add("hide");
-            toast("Click any seat to see the match from it", 3800);
-          }, 60);
+          document.getElementById("loader")?.classList.add("hide");
+          toast("Click any seat to see the match from it", 3800);
         }
       }
 
@@ -4513,6 +4514,11 @@ export function createStadium(opts = {}) {
           if (disposed) return;
           disposed = true;
           cancelAnimationFrame(rafId);
+          if (whoopTimer) clearTimeout(whoopTimer);
+          if (toastTimer) clearTimeout(toastTimer);
+          try {
+            gsap.killTweensOf("*");
+          } catch (_) {}
           disposers.slice().forEach((fn) => {
             try {
               fn();
@@ -4524,6 +4530,11 @@ export function createStadium(opts = {}) {
               AC.close();
             }
           } catch (_) {}
+          AC = null;
+          crowdMaster = null;
+          audioReady = false;
+          audioLoading = null;
+          Object.keys(buffers).forEach((key) => delete buffers[key]);
           try {
             scene.traverse((obj) => {
               if (obj.geometry) obj.geometry.dispose();
@@ -4543,7 +4554,20 @@ export function createStadium(opts = {}) {
             pickRT.dispose();
           } catch (_) {}
           try {
+            pickScene.traverse((obj) => {
+              if (obj.geometry) obj.geometry.dispose();
+              if (obj.material) {
+                const mats = Array.isArray(obj.material)
+                  ? obj.material
+                  : [obj.material];
+                mats.forEach((m) => m?.dispose());
+              }
+            });
+            pickScene.clear();
+          } catch (_) {}
+          try {
             renderer.dispose();
+            renderer.forceContextLoss();
           } catch (_) {}
           canvas.classList.remove("dragging", "seatmode");
         },
