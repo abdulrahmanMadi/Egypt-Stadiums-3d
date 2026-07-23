@@ -1,15 +1,15 @@
 <div id="loader" aria-live="polite">
       <svg viewBox="0 0 24 24" fill="none">
-        <path d="M12 2 21 7l-9 5-9-5 9-5Z" fill="#2f9bff" />
-        <path d="M3 12l9 5 9-5" stroke="#39c4ff" stroke-width="1.6" />
+        <path d="M12 2 21 7l-9 5-9-5 9-5Z" fill="#19b7ff" />
+        <path d="M3 12l9 5 9-5" stroke="#66d4ff" stroke-width="1.6" />
         <path
           d="M3 17l9 5 9-5"
-          stroke="#39c4ff"
+          stroke="#66d4ff"
           stroke-width="1.6"
           opacity=".5"
         />
       </svg>
-      <div class="lt" id="loader-text">Building the stadium…</div>
+      <div class="lt" id="loader-text">Loading Misr Stadium…</div>
     </div>
 
     <canvas
@@ -21,166 +21,34 @@
     <nav>
       <div class="brand">
         <svg viewBox="0 0 24 24" fill="none">
-          <path d="M12 2 21 7l-9 5-9-5 9-5Z" fill="#2f9bff" />
-          <path d="M3 12l9 5 9-5" stroke="#39c4ff" stroke-width="1.6" />
+          <path d="M12 2 21 7l-9 5-9-5 9-5Z" fill="#19b7ff" />
+          <path d="M3 12l9 5 9-5" stroke="#66d4ff" stroke-width="1.6" />
           <path
             d="M3 17l9 5 9-5"
-            stroke="#39c4ff"
+            stroke="#66d4ff"
             stroke-width="1.6"
             opacity=".5"
           />
         </svg>
-        StadiView
+        <div class="brand-text">
+          <span class="brand-name">Misr Stadium</span>
+          <span class="brand-sub">Stadium View</span>
+        </div>
       </div>
-      <div class="nav-links">
-        <a href="#" class="active">Stadium</a>
-        <a href="#">Experience</a>
-        <a href="#">Tickets</a>
-        <a href="#">Teams</a>
-      </div>
-      <div class="nav-actions">
-        <button class="icon-btn" aria-label="Search">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" />
-          </svg>
-        </button>
-        <button class="icon-btn" aria-label="Favorites">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M12 20.5s-7.5-4.7-9.3-9.3C1.3 7.6 3.6 4.5 6.9 4.5c2 0 3.6 1.1 4.4 2.7l.7 1.4.7-1.4c.8-1.6 2.4-2.7 4.4-2.7 3.3 0 5.6 3.1 4.2 6.7-1.8 4.6-9.3 9.3-9.3 9.3Z"
-            />
-          </svg>
-        </button>
-        <button class="icon-btn" aria-label="Cart, 2 items">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              d="M3 4h2l2.4 12.2A2 2 0 0 0 9.4 18h8.9a2 2 0 0 0 2-1.6L22 8H6"
-            />
-            <circle cx="10" cy="21" r="1.4" fill="currentColor" />
-            <circle cx="18" cy="21" r="1.4" fill="currentColor" /></svg
-          ><span class="badge">2</span>
-        </button>
-        <button
-          class="support-btn"
-          id="support-trigger"
-          type="button"
-          aria-haspopup="dialog"
-          aria-controls="support-modal"
-          aria-label="Learn how to support StadiView"
-          title="Support more projects like StadiView. No pressure"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path d="M4 8h13v6.5A4.5 4.5 0 0 1 12.5 19h-4A4.5 4.5 0 0 1 4 14.5V8Z" />
-            <path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M7 3v2M11 3v2M15 3v2" />
-          </svg>
-          <span>Support this project</span>
-        </button>
-      </div>
+      <div class="nav-chip">Explore · Preview seats · Orbit freely</div>
     </nav>
 
-    <div id="support-modal" aria-hidden="true">
-      <section
-        class="support-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="support-title"
-        aria-describedby="support-description"
-      >
-        <button
-          class="support-close"
-          id="support-close"
-          type="button"
-          aria-label="Close support message"
-        >
-          ×
-        </button>
-        <div class="support-kicker">☕ What I want to build next</div>
-        <h2 id="support-title">This stadium is only the beginning.</h2>
-        <p id="support-description">
-          I want to take StadiView much further. I want real time seat previews while
-          you’re buying, photoreal venue captures with Gaussian splatting,
-          sunrise to sunset lighting, and richer atmosphere and match day
-          detail.
-        </p>
-        <div class="support-ideas" aria-label="Ideas for future versions">
-          <span>Real time ticket previews</span>
-          <span>Gaussian splatting</span>
-          <span>Sunrise → sunset</span>
-          <span>Movies &amp; cinemas</span>
-          <span>Concerts &amp; live events</span>
-        </div>
-        <p>
-          I’d also love to bring this same kind of experience to movie seats,
-          concerts, and all sorts of live events. The goal is to help people
-          feel a place before they book it.
-        </p>
-        <p>
-          If this project made you smile, you can support the next experiment
-          below.
-        </p>
-        <p class="support-note">
-          Absolutely no pressure. I genuinely enjoy making these things, and
-          I’ll keep building with whatever tokens I get each day.
-        </p>
-        <div class="support-actions">
-          <a
-            class="support-paypal"
-            href="https://paypal.me/gunalesujata"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <path d="M4 8h13v6.5A4.5 4.5 0 0 1 12.5 19h-4A4.5 4.5 0 0 1 4 14.5V8Z" />
-              <path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M7 3v2M11 3v2M15 3v2" />
-            </svg>
-            Fuel the next build
-          </a>
-          <button class="support-later" id="support-later" type="button">
-            Maybe later
-          </button>
-        </div>
-      </section>
-    </div>
-
-    <section id="match" class="card" aria-label="Upcoming match">
-      <div class="eyebrow">INTERNATIONAL FRIENDLY</div>
+    <section id="match" class="card" aria-label="Match info">
+      <div class="eyebrow">LIVE DEMO</div>
       <div class="teams">
         <div class="team">
-          <div class="flag arg" role="img" aria-label="Argentina flag"></div>
-          <div class="name">ARGENTINA</div>
+          <div class="flag egy" role="img" aria-label="Egypt flag"></div>
+          <div class="name">EGYPT</div>
         </div>
         <div class="vs">VS</div>
         <div class="team">
-          <div class="flag esp" role="img" aria-label="Spain flag"></div>
-          <div class="name">SPAIN</div>
+          <div class="flag arg" role="img" aria-label="Argentina flag"></div>
+          <div class="name">ARGENTINA</div>
         </div>
       </div>
       <div class="meta">
@@ -193,7 +61,7 @@
           >
             <rect x="3" y="5" width="18" height="16" rx="2" />
             <path d="M8 3v4M16 3v4M3 10h18" /></svg
-          >Demo fixture <span class="dot">·</span> 8:30 PM
+          >Friendly · 8:30 PM
         </div>
         <div class="row">
           <svg
@@ -204,14 +72,14 @@
           >
             <path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11Z" />
             <circle cx="12" cy="10" r="2.6" /></svg
-          >Metropolitano Stadium, Madrid
+          >New Administrative Capital
         </div>
       </div>
     </section>
 
     <section id="camcard" class="card" aria-label="Camera controls">
       <header>
-        <div class="card-title">Camera Controls</div>
+        <div class="card-title">Camera</div>
         <button class="help" id="cc-help" aria-label="Controls help">?</button>
       </header>
       <div class="cam-body">
@@ -243,15 +111,14 @@
             d="M9 11.2V7a3 3 0 0 1 6 0v4.2M7 11h10l-.8 8.2a2 2 0 0 1-2 1.8H9.8a2 2 0 0 1-2-1.8L7 11Z"
           />
         </svg>
-        Click and drag to rotate <span style="margin: 0 4px">·</span> Scroll to
-        zoom
+        Drag to orbit · Scroll to zoom
       </footer>
     </section>
 
     <div id="rightcol">
       <section id="overview" class="card" aria-label="Stadium overview">
         <header>
-          <div class="card-title">Stadium Overview</div>
+          <div class="card-title">Overview</div>
           <button class="expand" id="ov-expand" aria-label="Reset to full view">
             <svg
               viewBox="0 0 24 24"
@@ -266,27 +133,15 @@
         <canvas id="ov" width="596" height="300"></canvas>
       </section>
 
-      <section id="seatcard" class="card" aria-label="Selected seat">
+      <section id="seatcard" class="card" aria-label="Seat view preview">
         <header>
           <div class="label">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="m12 2 2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 16.9l-6.1 3.5 1.5-6.8L2.2 9l6.9-.7L12 2Z"
               /></svg
-            ><span id="p-label">SELECTED SEAT</span>
+            ><span id="p-label">SEAT PREVIEW</span>
           </div>
-          <button id="fav" aria-label="Save seat to favorites">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M12 20.5s-7.5-4.7-9.3-9.3C1.3 7.6 3.6 4.5 6.9 4.5c2 0 3.6 1.1 4.4 2.7l.7 1.4.7-1.4c.8-1.6 2.4-2.7 4.4-2.7 3.3 0 5.6 3.1 4.2 6.7-1.8 4.6-9.3 9.3-9.3 9.3Z"
-              />
-            </svg>
-          </button>
         </header>
         <div id="p-section">Section 125</div>
         <div id="p-sub">
@@ -303,94 +158,17 @@
             <div class="v" id="p-seat">18</div>
           </div>
           <div class="cell">
-            <div class="k">Price</div>
-            <div class="v" id="p-price">
-              €168 <span class="unit">/seat</span>
-            </div>
+            <div class="k">View</div>
+            <div class="v" id="p-score">★ —</div>
           </div>
         </div>
         <div class="preview">
           <img id="p-img" alt="View from the selected seat" />
           <div class="ph" id="p-ph">Rendering seat view…</div>
-          <div class="pill tl" id="p-score">★ view</div>
           <div class="pill br">360°</div>
         </div>
-        <div class="benefits" id="benefits">
-          <div class="benefit">
-            <svg
-              class="bicon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M6 11V7a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v4" />
-              <path
-                d="M4 13a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3Z"
-              />
-              <path d="M7 18v2M17 18v2" /></svg
-            ><span class="btxt">Padded seat</span><span class="spacer"></span
-            ><svg class="check" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="10" opacity=".22" />
-              <path
-                d="m8.2 12.3 2.6 2.6 5-5.3"
-                stroke="#fff"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"
-              />
-            </svg>
-          </div>
-          <div class="benefit">
-            <svg
-              class="bicon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" />
-              <circle cx="12" cy="12" r="2.8" /></svg
-            ><span class="btxt">Great view</span><span class="spacer"></span
-            ><svg class="check" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="10" opacity=".22" />
-              <path
-                d="m8.2 12.3 2.6 2.6 5-5.3"
-                stroke="#fff"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"
-              />
-            </svg>
-          </div>
-          <div class="benefit">
-            <svg
-              class="bicon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a2.5 2.5 0 0 0 0 5V16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a2.5 2.5 0 0 0 0-5V8Z"
-              />
-              <path d="M13 6v12" stroke-dasharray="2.4 2.4" /></svg
-            ><span class="btxt">Food &amp; drink voucher</span
-            ><span class="spacer"></span
-            ><svg class="check" viewBox="0 0 24 24" fill="currentColor">
-              <circle cx="12" cy="12" r="10" opacity=".22" />
-              <path
-                d="m8.2 12.3 2.6 2.6 5-5.3"
-                stroke="#fff"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"
-              />
-            </svg>
-          </div>
-        </div>
-        <button id="checkout">
-          <span id="checkout-label">Grab seat</span>
+        <button id="checkout" type="button">
+          <span id="checkout-label">View from seat</span>
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -400,17 +178,7 @@
             <path d="M4 12h15M13 6l6 6-6 6" />
           </svg>
         </button>
-        <div class="secure">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <rect x="4" y="10" width="16" height="10" rx="2" />
-            <path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg
-          >Concept demo · no real ticket sales
-        </div>
+        <div class="secure">Explore only · no ticket booking</div>
       </section>
     </div>
 
@@ -476,6 +244,6 @@
 
     <div id="tip" aria-hidden="true">
       <div class="t1" id="tip1">Section · Row · Seat</div>
-      <div class="t2" id="tip2">€ pending</div>
+      <div class="t2" id="tip2">Click to preview view</div>
     </div>
     <div id="toast" role="status"></div>

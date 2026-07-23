@@ -1,0 +1,7 @@
+{
+  "line": 162,
+  "newLen": 11213,
+  "oldPreview": "        // grand entrance portals (4 axes)\n        const portalMat = new THREE.MeshLambertMaterial({",
+  "hasParking": true,
+  "hasRings": false
+}

@@ -1,0 +1,11 @@
+Stadium crowd sounds — sourced from Mixkit (https://mixkit.co)
+License: Mixkit License — free for commercial and non-commercial use.
+https://mixkit.co/license/#sfxFree
+
+Files:
+- crowd-ambience.mp3  — Ambient sports crowd sound (Mixkit #2097)
+- crowd-cheer.mp3     — Stadium joy shouting crowd (Mixkit #3022)
+- crowd-cheer-big.mp3 — Huge crowd cheering victory (Mixkit #438)
+- crowd-stadium.mp3   — Crowd at the stadium (Mixkit #2111)
+- crowd-yell.mp3      — Crowd yelling at stadium (Mixkit #2110)
+- crowd-chant.mp3     — Crowd chanting / stadium ambience (Mixkit #1573)

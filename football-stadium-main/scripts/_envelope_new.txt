@@ -1,0 +1,234 @@
+        // ——— stadium envelope / cladding (closes wall→roof gap) ———
+        {
+          const ENV_SEG = 128;
+          // Misr-style cool-blue vertical cladding
+          const facadeTex = canvasTexture(1024, 512, (x, w, h) => {
+            x.fillStyle = "#c8d8ea";
+            x.fillRect(0, 0, w, h);
+            for (let i = 0; i < 96; i++) {
+              const t = i % 3;
+              x.fillStyle =
+                t === 0 ? "#b4c9e0" : t === 1 ? "#d7e6f5" : "#9eb8d4";
+              x.fillRect(i * (w / 96), 0, w / 96 - 1, h);
+            }
+            // lit window band
+            x.fillStyle = "#071422";
+            x.fillRect(0, h * 0.42, w, h * 0.2);
+            for (let i = 0; i < 90; i++) {
+              const lit = Math.random() < 0.5;
+              x.fillStyle = lit
+                ? "rgba(255,205,130," +
+                  (0.4 + Math.random() * 0.45).toFixed(2) +
+                  ")"
+                : "rgba(30,60,95,0.55)";
+              x.fillRect(i * (w / 90) + 2, h * 0.44, w / 90 - 4, h * 0.16);
+            }
+            // upper vent slots
+            x.fillStyle = "rgba(40,70,100,0.35)";
+            for (let i = 0; i < 48; i++) {
+              x.fillRect(i * (w / 48) + 3, h * 0.12, w / 48 - 6, h * 0.08);
+            }
+          }, 10, 1);
+          facadeTex.encoding = THREE.sRGBEncoding;
+          const cladMat = new THREE.MeshLambertMaterial({
+            map: facadeTex,
+            side: THREE.DoubleSide,
+          });
+          const upperCladMat = new THREE.MeshLambertMaterial({
+            color: 0xa8c2dc,
+            side: THREE.DoubleSide,
+          });
+          const fasciaMat = new THREE.MeshLambertMaterial({
+            color: 0x1a2230,
+            side: THREE.DoubleSide,
+          });
+          const soffitMat = new THREE.MeshLambertMaterial({
+            color: 0xc5d8ec,
+            side: THREE.DoubleSide,
+            emissive: 0x334455,
+            emissiveIntensity: 0.15,
+          });
+          const soffitLit = new THREE.MeshBasicMaterial({
+            color: 0xe8f2ff,
+            toneMapped: false,
+            side: THREE.DoubleSide,
+          });
+
+          // lower bowl cladding: wide base → mid (full height continuity)
+          scene.add(
+            ringStrip(
+              ROOF.outRx + 18,
+              ROOF.outRz + 16,
+              0.05,
+              ROOF.outRx + 5,
+              ROOF.outRz + 4.5,
+              ROOF.outY * 0.52,
+              ENV_SEG,
+              cladMat,
+              12,
+            ),
+          );
+          // mid envelope — fills former open gap up toward eaves
+          scene.add(
+            ringStrip(
+              ROOF.outRx + 5,
+              ROOF.outRz + 4.5,
+              ROOF.outY * 0.52,
+              ROOF.outRx + 2.4,
+              ROOF.outRz + 2.2,
+              ROOF.outY - 1.2,
+              ENV_SEG,
+              upperCladMat,
+              8,
+            ),
+          );
+          // eaves fascia: thick dark ring locking cladding to roof edge
+          scene.add(
+            ringStrip(
+              ROOF.outRx + 0.2,
+              ROOF.outRz + 0.2,
+              ROOF.outY - 1.8,
+              ROOF.outRx + 3.6,
+              ROOF.outRz + 3.2,
+              ROOF.outY + 1.4,
+              ENV_SEG,
+              fasciaMat,
+              4,
+            ),
+          );
+          // outer roof-edge cap (silhouette completion)
+          scene.add(
+            ringStrip(
+              ROOF.outRx + 3.2,
+              ROOF.outRz + 2.8,
+              ROOF.outY + 0.6,
+              ROOF.outRx + 3.2,
+              ROOF.outRz + 2.8,
+              ROOF.outY + 2.8,
+              ENV_SEG,
+              fasciaMat,
+              2,
+            ),
+          );
+
+          // vertical cladding fins between masts (outer skin ribs)
+          const finMat = new THREE.MeshLambertMaterial({ color: 0xd2e2f2 });
+          for (let i = 0; i < MASTS; i++) {
+            const a = (i / MASTS) * TAU,
+              c = Math.cos(a),
+              s = Math.sin(a);
+            const rx = ROOF.outRx + 7.2,
+              rz = ROOF.outRz + 6.2;
+            const finH = ROOF.outY + 4;
+            const fin = new THREE.Mesh(
+              new THREE.BoxGeometry(0.55, finH, 2.4),
+              finMat,
+            );
+            fin.position.set(rx * c, finH / 2, rz * s);
+            fin.rotation.y = -a;
+            scene.add(fin);
+          }
+
+          // perforated upper collar behind masts (semi-solid skin)
+          const meshTex = canvasTexture(256, 128, (x, w, h) => {
+            x.fillStyle = "#8aa8c4";
+            x.fillRect(0, 0, w, h);
+            x.fillStyle = "rgba(15,30,50,0.55)";
+            for (let u = 0; u < 32; u++) {
+              for (let v = 0; v < 10; v++) {
+                x.fillRect(u * (w / 32) + 2, v * (h / 10) + 2, w / 32 - 4, h / 10 - 4);
+              }
+            }
+          }, 16, 2);
+          meshTex.encoding = THREE.sRGBEncoding;
+          scene.add(
+            ringStrip(
+              ROOF.outRx + 6.5,
+              ROOF.outRz + 5.5,
+              ROOF.outY * 0.45,
+              ROOF.outRx + 6.5,
+              ROOF.outRz + 5.5,
+              ROOF.outY + 0.5,
+              ENV_SEG,
+              new THREE.MeshLambertMaterial({
+                map: meshTex,
+                transparent: true,
+                opacity: 0.72,
+                side: THREE.DoubleSide,
+              }),
+              16,
+            ),
+          );
+
+          // interior soffit ribbons under canopy (light-blue envelope bands)
+          const soffitBands = [
+            [0.12, 0.22, soffitMat],
+            [0.28, 0.36, soffitLit],
+            [0.42, 0.52, soffitMat],
+            [0.58, 0.66, soffitLit],
+            [0.72, 0.82, soffitMat],
+            [0.88, 0.96, soffitLit],
+          ];
+          soffitBands.forEach(([t0, t1, mat]) => {
+            const r0x = ROOF.inRx + (ROOF.outRx - ROOF.inRx) * t0;
+            const r0z = ROOF.inRz + (ROOF.outRz - ROOF.inRz) * t0;
+            const r1x = ROOF.inRx + (ROOF.outRx - ROOF.inRx) * t1;
+            const r1z = ROOF.inRz + (ROOF.outRz - ROOF.inRz) * t1;
+            const y0 = ROOF.inY + (ROOF.outY - ROOF.inY) * t0 - 1.6;
+            const y1 = ROOF.inY + (ROOF.outY - ROOF.inY) * t1 - 1.6;
+            scene.add(ringStrip(r0x, r0z, y0, r1x, r1z, y1, ENV_SEG, mat, 20));
+          });
+
+          // inner bowl cladding (backs of upper stands, closes silhouette from inside)
+          scene.add(
+            ringStrip(
+              ROOF.outRx - 1.2,
+              ROOF.outRz - 1.0,
+              18,
+              ROOF.outRx - 0.4,
+              ROOF.outRz - 0.3,
+              ROOF.outY - 2,
+              ENV_SEG,
+              new THREE.MeshLambertMaterial({
+                color: 0xb8c8da,
+                side: THREE.DoubleSide,
+              }),
+              6,
+            ),
+          );
+        }
+        // cyan LED rings on exterior envelope
+        scene.add(
+          ringStrip(
+            ROOF.outRx + 4.0,
+            ROOF.outRz + 3.5,
+            ROOF.outY - 3.0,
+            ROOF.outRx + 4.0,
+            ROOF.outRz + 3.5,
+            ROOF.outY - 1.2,
+            120,
+            new THREE.MeshBasicMaterial({
+              color: 0x19b7ff,
+              toneMapped: false,
+              side: THREE.DoubleSide,
+            }),
+            40,
+          ),
+        );
+        scene.add(
+          ringStrip(
+            ROOF.outRx + 5.2,
+            ROOF.outRz + 4.6,
+            ROOF.outY * 0.52,
+            ROOF.outRx + 5.2,
+            ROOF.outRz + 4.6,
+            ROOF.outY * 0.52 + 1.1,
+            120,
+            new THREE.MeshBasicMaterial({
+              color: 0x66d4ff,
+              toneMapped: false,
+              side: THREE.DoubleSide,
+            }),
+            40,
+          ),
+        );

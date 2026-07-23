@@ -1,0 +1,98 @@
+        // detailed white facade with vertical fins + window bands
+        {
+          const facadeTex = canvasTexture(1024, 256, (x, w, h) => {
+            x.fillStyle = "#e6ebf2";
+            x.fillRect(0, 0, w, h);
+            // vertical fins
+            for (let i = 0; i < 64; i++) {
+              x.fillStyle = i % 2 ? "#d5dde8" : "#f2f5fa";
+              x.fillRect(i * (w / 64), 0, w / 64 - 1, h);
+            }
+            // window strip
+            x.fillStyle = "#0b1a2e";
+            x.fillRect(0, h * 0.38, w, h * 0.22);
+            for (let i = 0; i < 80; i++) {
+              const lit = Math.random() < 0.45;
+              x.fillStyle = lit
+                ? "rgba(255,210,140," + (0.35 + Math.random() * 0.5).toFixed(2) + ")"
+                : "rgba(40,70,110,0.55)";
+              x.fillRect(i * (w / 80) + 2, h * 0.4, w / 80 - 4, h * 0.18);
+            }
+            // lower vents
+            x.fillStyle = "rgba(120,130,145,0.35)";
+            for (let i = 0; i < 40; i++) {
+              x.fillRect(i * (w / 40) + 4, h * 0.78, w / 40 - 8, h * 0.12);
+            }
+          }, 8, 1);
+          facadeTex.encoding = THREE.sRGBEncoding;
+          const shell = new THREE.Mesh(
+            new THREE.CylinderGeometry(
+              ROOF.outRx + 1.5,
+              ROOF.outRx + 16,
+              ROOF.outY * 0.78,
+              128,
+              1,
+              true,
+            ),
+            new THREE.MeshLambertMaterial({
+              map: facadeTex,
+              side: THREE.DoubleSide,
+            }),
+          );
+          shell.scale.z = (ROOF.outRz + 16) / (ROOF.outRx + 16);
+          shell.position.y = (ROOF.outY * 0.78) / 2;
+          scene.add(shell);
+          // secondary inner cladding ring
+          const innerShell = new THREE.Mesh(
+            new THREE.CylinderGeometry(
+              ROOF.outRx - 0.5,
+              ROOF.outRx + 3,
+              ROOF.outY * 0.55,
+              96,
+              1,
+              true,
+            ),
+            new THREE.MeshLambertMaterial({
+              color: 0xd8dee8,
+              side: THREE.DoubleSide,
+            }),
+          );
+          innerShell.scale.z = (ROOF.outRz + 3) / (ROOF.outRx + 3);
+          innerShell.position.y = (ROOF.outY * 0.55) / 2 + 4;
+          scene.add(innerShell);
+        }
+        // bright cyan LED ring under roofline (double band)
+        scene.add(
+          ringStrip(
+            ROOF.outRx + 1.2,
+            ROOF.outRz + 1.2,
+            ROOF.outY - 3.2,
+            ROOF.outRx + 1.2,
+            ROOF.outRz + 1.2,
+            ROOF.outY - 1.4,
+            120,
+            new THREE.MeshBasicMaterial({
+              color: 0x19b7ff,
+              toneMapped: false,
+              side: THREE.DoubleSide,
+            }),
+            40,
+          ),
+        );
+        scene.add(
+          ringStrip(
+            ROOF.outRx + 2.2,
+            ROOF.outRz + 2.2,
+            ROOF.outY - 5.4,
+            ROOF.outRx + 2.2,
+            ROOF.outRz + 2.2,
+            ROOF.outY - 4.4,
+            120,
+            new THREE.MeshBasicMaterial({
+              color: 0x66d4ff,
+              toneMapped: false,
+              side: THREE.DoubleSide,
+            }),
+            40,
+          ),
+        );

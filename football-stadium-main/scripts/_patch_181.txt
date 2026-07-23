@@ -1,0 +1,7 @@
+{
+  "line": 181,
+  "newLen": 6477,
+  "oldPreview": "      {\n        const SEG = 160;\n        const MASTS = 40;\n        // saddle: high behind goals (±X)",
+  "hasParking": false,
+  "hasRings": true
+}
