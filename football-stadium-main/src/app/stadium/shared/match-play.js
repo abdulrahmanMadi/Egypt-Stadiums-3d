@@ -223,15 +223,45 @@ export function createMatchPlay(scene, opts = {}) {
   for (let team = 0; team < 2; team++) {
     for (let i = 0; i < 11; i++) {
       const gk = i === 0;
-      const col = gk ? 0 : 1 + Math.floor((i - 1) / 3.4),
-        rowIn = gk ? 1.5 : (i - 1) % 4;
-      const side = team ? 1 : -1;
-      const hx = gk ? side * 49.5 : side * (8 + col * 11);
-      const hz = THREE.MathUtils.clamp((rowIn - 1.5) * 14, -30, 30);
+      const dir = team ? -1 : 1;
+      let role = 'gk',
+        homeQ = -49.5,
+        hz = 0,
+        zoneMinQ = -50,
+        zoneMaxQ = -43,
+        shapeShift = 0;
+      if (i >= 1 && i <= 4) {
+        role = 'defender';
+        homeQ = -27;
+        hz = [-25, -8, 8, 25][i - 1];
+        zoneMinQ = -43;
+        zoneMaxQ = 12;
+        shapeShift = 0.7;
+      } else if (i >= 5 && i <= 7) {
+        role = 'midfielder';
+        homeQ = -3;
+        hz = [-20, 0, 20][i - 5];
+        zoneMinQ = -32;
+        zoneMaxQ = 36;
+        shapeShift = 0.65;
+      } else if (i >= 8) {
+        role = 'forward';
+        homeQ = 24;
+        hz = [-18, 0, 18][i - 8];
+        zoneMinQ = -6;
+        zoneMaxQ = 47;
+        shapeShift = 0.42;
+      }
+      const hx = homeQ * dir;
       const p = mkPlayer(kits[team], gk);
       players.push(
         Object.assign(p, {
           home: new THREE.Vector3(hx, 0, hz),
+          role,
+          homeQ,
+          zoneMinQ,
+          zoneMaxQ,
+          shapeShift,
           team,
           gk,
           ph: rng() * TAU,
@@ -334,6 +364,8 @@ export function createMatchPlay(scene, opts = {}) {
     to: new THREE.Vector3(),
     arc: 0.6,
     shot: false,
+    passCount: 0,
+    turnover: false,
     celebrate: 0,
     scoredBy: 0,
   };
@@ -358,6 +390,8 @@ export function createMatchPlay(scene, opts = {}) {
         const cand = team * 11 + 1 + ((rng() * 10) | 0);
         if (cand === match.holder) continue;
         const c = players[cand];
+        // Build through defenders and midfielders before looking for a forward.
+        if (match.passCount < 3 && c.role === 'forward') continue;
         const v =
           c.g.position.x * dir + rng() * 22 - Math.abs(c.g.position.z) * 0.1;
         if (v > bestV) {
@@ -365,7 +399,11 @@ export function createMatchPlay(scene, opts = {}) {
           best = cand;
         }
       }
-      if (best < 0) best = team * 11 + 1 + ((rng() * 10) | 0);
+      if (best < 0) {
+        const base = team * 11;
+        best = base + 1 + ((rng() * 7) | 0);
+        if (best === match.holder) best = base + 1 + ((best - base) % 7);
+      }
       match.receiver = best;
       const r = players[best];
       match.to.set(
@@ -375,9 +413,75 @@ export function createMatchPlay(scene, opts = {}) {
       );
       match.shot = false;
       match.arc = rng() < 0.28 ? 2.2 + rng() * 1.6 : 0.3 + rng() * 0.5;
+
+      // After eight completed passes, the closest opponent steps into the
+      // passing lane. The ball still follows the normal pass physics.
+      match.turnover = false;
+      if (match.passCount >= 8) {
+        const passDelta = match.to.clone().sub(match.from);
+        const passLenSq = Math.max(0.001, passDelta.lengthSq());
+        const opponentBase = team === 0 ? 11 : 0;
+        const lanePoint = new THREE.Vector3();
+        let interceptor = -1;
+        let nearestLane = Infinity;
+        for (let i = opponentBase; i < opponentBase + 11; i++) {
+          const candidate = players[i];
+          if (candidate.gk) continue;
+          const rel = candidate.g.position.clone().sub(match.from);
+          const u = THREE.MathUtils.clamp(
+            rel.dot(passDelta) / passLenSq,
+            0.28,
+            0.82,
+          );
+          lanePoint.copy(match.from).addScaledVector(passDelta, u);
+          const laneDistance = candidate.g.position.distanceToSquared(lanePoint);
+          if (laneDistance < nearestLane) {
+            nearestLane = laneDistance;
+            interceptor = i;
+            match.to.copy(lanePoint);
+          }
+        }
+        if (interceptor >= 0) {
+          match.receiver = interceptor;
+          match.turnover = true;
+          match.arc = 0.25 + rng() * 0.35;
+        }
+      }
     }
     const dist = match.from.distanceTo(match.to);
     match.dur = THREE.MathUtils.clamp(dist / (match.shot ? 26 : 17), 0.35, 2.4);
+    match.t = 0;
+    match.phase = 'fly';
+  }
+
+  function startTackleTurnover() {
+    const h = players[match.holder];
+    const opponentBase = h.team === 0 ? 11 : 0;
+    let interceptor = -1;
+    let nearest = Infinity;
+    for (let i = opponentBase; i < opponentBase + 11; i++) {
+      const candidate = players[i];
+      if (candidate.gk) continue;
+      const distance = candidate.g.position.distanceToSquared(h.g.position);
+      if (distance < nearest) {
+        nearest = distance;
+        interceptor = i;
+      }
+    }
+    if (interceptor < 0) {
+      startPass(false);
+      return;
+    }
+    match.from.copy(ball.position);
+    match.receiver = interceptor;
+    match.to.copy(players[interceptor].g.position);
+    match.to.x = THREE.MathUtils.clamp(match.to.x, -50, 50);
+    match.to.z = THREE.MathUtils.clamp(match.to.z, -31, 31);
+    match.shot = false;
+    match.turnover = true;
+    match.arc = 0.18 + rng() * 0.22;
+    const dist = match.from.distanceTo(match.to);
+    match.dur = THREE.MathUtils.clamp(dist / 17, 0.25, 1.2);
     match.t = 0;
     match.phase = 'fly';
   }
@@ -403,7 +507,14 @@ export function createMatchPlay(scene, opts = {}) {
       match.dur = 1.4;
       return;
     }
+    const previousTeam = teamOf(match.holder);
     match.holder = match.receiver;
+    if (match.turnover || teamOf(match.holder) !== previousTeam) {
+      match.passCount = 0;
+      match.turnover = false;
+    } else {
+      match.passCount++;
+    }
     match.phase = 'hold';
     match.t = 0;
     match.dur = 0.5 + rng() * 1.3;
@@ -430,7 +541,15 @@ export function createMatchPlay(scene, opts = {}) {
       bp.lerp(V3, Math.min(1, dt * 8));
       if (match.t >= match.dur) {
         const dir = h.team ? -1 : 1;
-        startPass(h.g.position.x * dir > 22 && rng() < 0.42);
+        const attackQ = h.g.position.x * dir;
+        if (h.role === 'forward' && attackQ > 32) {
+          // A forward isolated in the opponent box is closed down and tackled,
+          // rather than unrealistically recycling the ball backwards.
+          startTackleTurnover();
+        } else {
+          // Pass-only exhibition: retain the existing passing AI, without shots.
+          startPass(false);
+        }
       }
     } else {
       const k = Math.min(1, match.t / match.dur);
@@ -488,9 +607,20 @@ export function createMatchPlay(scene, opts = {}) {
         tz = bp.z;
         run = 1.5;
       } else {
-        tx =
-          THREE.MathUtils.clamp(p.home.x + bp.x * 0.3, -49, 49) +
-          Math.sin(t * p.sp * 0.5 + p.ph) * 2.4;
+        // Role-based formation in attack-relative coordinates. These zones
+        // deliberately overlap the halfway line; no team-half clamp exists.
+        const dir = p.team ? -1 : 1;
+        const ballQ = bp.x * dir;
+        const targetQ = THREE.MathUtils.clamp(
+          p.homeQ + ballQ * p.shapeShift,
+          p.zoneMinQ,
+          p.zoneMaxQ,
+        );
+        tx = THREE.MathUtils.clamp(
+          targetQ * dir + Math.sin(t * p.sp * 0.5 + p.ph) * 2.4,
+          -49,
+          49,
+        );
         tz =
           THREE.MathUtils.clamp(p.home.z + bp.z * 0.22, -31, 31) +
           Math.cos(t * p.sp * 0.42 + p.ph) * 2.0;
