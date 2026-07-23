@@ -92,8 +92,8 @@ export function resolveStadiumIdFromRoute(raw) {
 export function disposeActiveStadium() {
   if (!active?.dispose) {
     active = null;
-    return;
-  }
+          return;
+        }
   try {
     active.dispose();
   } catch (err) {
@@ -173,7 +173,7 @@ export async function initStadium(stadiumId = DEFAULT_STADIUM_ID) {
       );
       throw err;
     }
-  })();
+        })();
 
   switching = run;
   try {

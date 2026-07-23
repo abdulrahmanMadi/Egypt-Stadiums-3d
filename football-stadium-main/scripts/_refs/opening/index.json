@@ -1,0 +1,30 @@
+[
+  {
+    "name": "home-default",
+    "theta": -1.5707963267948966,
+    "phi": 0.78,
+    "radius": 300,
+    "shot": "scripts\\_refs\\opening\\home-default.png"
+  },
+  {
+    "name": "negX-face",
+    "theta": 3.141592653589793,
+    "phi": 0.7,
+    "radius": 200,
+    "shot": "scripts\\_refs\\opening\\negX-face.png"
+  },
+  {
+    "name": "left-close",
+    "theta": -1.2207963267948965,
+    "phi": 0.65,
+    "radius": 220,
+    "shot": "scripts\\_refs\\opening\\left-close.png"
+  },
+  {
+    "name": "user-like",
+    "theta": -0.9,
+    "phi": 0.7,
+    "radius": 310,
+    "shot": "scripts\\_refs\\opening\\user-like.png"
+  }
+]

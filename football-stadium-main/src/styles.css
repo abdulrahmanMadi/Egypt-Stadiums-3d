@@ -255,58 +255,44 @@ body.stadium-noseats #rightcol {
   overflow: hidden;
   border: 1px solid rgba(12, 42, 69, 0.15);
   box-shadow: var(--shadow-sm);
+  background-repeat: no-repeat;
+  background-position: center;
 }
 .flag.egy {
-  background: linear-gradient(
-    180deg,
-    #8b0000 33.3%,
-    #fff 33.3% 66.6%,
-    #111 66.6%
-  );
+  background-color: #111;
+  background-image: url('/flags/egy.png');
+  background-size: cover;
 }
+.flag.egy::before,
 .flag.egy::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 10px;
-  height: 10px;
-  margin: -5px 0 0 -5px;
-  border-radius: 50%;
-  background: #c09a3e;
+  content: none;
 }
 .flag.arg {
-  background: linear-gradient(
-    180deg,
-    #74acdf 33.3%,
-    #fff 33.3% 66.6%,
-    #74acdf 66.6%
-  );
+  background-color: #74acdf;
+  background-image: url('/flags/arg.png');
+  background-size: cover;
 }
+.flag.arg::before,
 .flag.arg::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 12px;
-  height: 12px;
-  margin: -6px 0 0 -6px;
-  border-radius: 50%;
-  background: #f6b40e;
+  content: none;
 }
 .flag.ahly {
-  background: #8b0000;
+  background-color: #6e0000;
+  background-image: url('/flags/ahly.png');
+  background-size: contain;
+  border-color: rgba(74, 0, 0, 0.45);
+}
+.flag.ahly::before,
+.flag.ahly::after {
+  content: none;
 }
 .flag.zam {
-  background: linear-gradient(
-    180deg,
-    #fff 28%,
-    #c4122e 28% 36%,
-    #fff 36% 64%,
-    #c4122e 64% 72%,
-    #fff 72%
-  );
+  background-color: #ffffff;
+  background-image: url('/flags/zam.png');
+  background-size: contain;
+  border-color: rgba(12, 42, 69, 0.2);
 }
+.flag.zam::before,
 .flag.zam::after {
   content: none;
 }

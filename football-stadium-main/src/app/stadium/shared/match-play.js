@@ -40,17 +40,17 @@ export function createMatchPlay(scene, opts = {}) {
 
   const defaultKits = [
     {
-      // Al Ahly — red / white
-      shirt: matFrom(0xc8102e, { emissive: 0x8b0018, emissiveIntensity: 0.14 }),
+      // Al Ahly — deep red / white
+      shirt: matFrom(0x6e0000, { emissive: 0x4a0000, emissiveIntensity: 0.12 }),
       shorts: matFrom(0xf2f4f8),
-      socks: matFrom(0xc8102e, { emissive: 0x8b0018, emissiveIntensity: 0.08 }),
+      socks: matFrom(0x6e0000, { emissive: 0x4a0000, emissiveIntensity: 0.08 }),
       gk: matFrom(0x1a1a1a, { emissive: 0x222222, emissiveIntensity: 0.1 }),
     },
     {
       // Zamalek — white / black
-      shirt: matFrom(0xf5f7fa, { emissive: 0xd0d4dc, emissiveIntensity: 0.08 }),
+      shirt: matFrom(0xffffff, { emissive: 0xd8dce4, emissiveIntensity: 0.06 }),
       shorts: matFrom(0x141414),
-      socks: matFrom(0xf5f7fa),
+      socks: matFrom(0xffffff),
       gk: matFrom(0x2fbf71, { emissive: 0x2fbf71, emissiveIntensity: 0.12 }),
     },
     {
@@ -255,7 +255,7 @@ export function createMatchPlay(scene, opts = {}) {
   );
   rf.g.position.set(0, 0, 10);
 
-  const dugoutCenters = [-16, 16];
+  const dugoutCenters = opts.dugoutCenters || [-18, 18];
   dugoutCenters.forEach((cx, di) => {
     for (let s = 0; s < 7; s++) {
       const sub = mkPlayer(kits[di], false, { seated: true });
