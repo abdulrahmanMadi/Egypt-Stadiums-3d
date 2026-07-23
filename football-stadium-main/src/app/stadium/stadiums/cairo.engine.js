@@ -359,17 +359,34 @@ export function createStadium(opts = {}) {
       ring.position.set(0, -0.06, plazaZ);
       scene.add(ring);
     }
-    const lawnMat = new THREE.MeshLambertMaterial({ color: 0x1a8a2e });
-    for (let i = 0; i < 6; i++) {
-      const a0 = -1.05 + i * 0.36;
+    const lawnMat = new THREE.MeshLambertMaterial({
+      color: 0x1a8a2e,
+      side: THREE.DoubleSide,
+    });
+    const lawnDark = new THREE.MeshLambertMaterial({
+      color: 0x146e24,
+      side: THREE.DoubleSide,
+    });
+    const lawnLite = new THREE.MeshLambertMaterial({ color: 0x22a038 });
+    // Full-circle plaza lawn wedges (both halves)
+    for (let i = 0; i < 20; i++) {
+      const a0 = (i / 20) * TAU;
       const bed = new THREE.Mesh(
-        new THREE.RingGeometry(22, 36, 48, 1, a0, 0.28),
-        lawnMat,
+        new THREE.RingGeometry(18, 42, 48, 1, a0, TAU / 20 - 0.06),
+        i % 2 ? lawnMat : lawnLite,
       );
       bed.rotation.x = -Math.PI / 2;
       bed.position.set(0, 0.02, plazaZ);
       scene.add(bed);
     }
+    // Inner plaza green disc
+    const plazaGreen = new THREE.Mesh(
+      new THREE.RingGeometry(10, 16, 48),
+      lawnDark,
+    );
+    plazaGreen.rotation.x = -Math.PI / 2;
+    plazaGreen.position.set(0, 0.03, plazaZ);
+    scene.add(plazaGreen);
     const center = new THREE.Mesh(
       new THREE.CircleGeometry(9, 40),
       new THREE.MeshBasicMaterial({ color: 0x3a3e48 }),
@@ -380,77 +397,196 @@ export function createStadium(opts = {}) {
 
     const trunk = new THREE.MeshLambertMaterial({ color: 0x5a3a1e });
     const leaf = new THREE.MeshLambertMaterial({ color: 0x168a28 });
+    const leafDeep = new THREE.MeshLambertMaterial({ color: 0x0e6a1c });
     const bush = new THREE.MeshLambertMaterial({ color: 0x1a7a28 });
-    const addTree = (x, z, s = 1) => {
+    const hedge = new THREE.MeshLambertMaterial({ color: 0x147028 });
+
+    const addTree = (x, z, s = 1, kind = 0) => {
       const tr = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18 * s, 0.26 * s, 3.6 * s, 6),
+        new THREE.CylinderGeometry(0.16 * s, 0.24 * s, (kind === 1 ? 5.2 : 3.6) * s, 6),
         trunk,
       );
-      tr.position.set(x, 1.8 * s, z);
+      tr.position.set(x, (kind === 1 ? 2.6 : 1.8) * s, z);
       scene.add(tr);
-      const cr = new THREE.Mesh(new THREE.SphereGeometry(1.55 * s, 8, 6), leaf);
-      cr.scale.set(1.2, 0.55, 1.2);
-      cr.position.set(x, 4.0 * s, z);
-      scene.add(cr);
+      if (kind === 1) {
+        // palm-ish layered canopy
+        for (let L = 0; L < 3; L++) {
+          const cr = new THREE.Mesh(
+            new THREE.SphereGeometry((1.1 - L * 0.15) * s, 7, 5),
+            L % 2 ? leaf : leafDeep,
+          );
+          cr.scale.set(1.35, 0.35, 1.35);
+          cr.position.set(x, (4.6 + L * 0.55) * s, z);
+          scene.add(cr);
+        }
+      } else {
+        const cr = new THREE.Mesh(
+          new THREE.SphereGeometry(1.55 * s, 8, 6),
+          kind === 2 ? leafDeep : leaf,
+        );
+        cr.scale.set(1.25, 0.6, 1.25);
+        cr.position.set(x, 4.0 * s, z);
+        scene.add(cr);
+        if (kind === 2) {
+          const cr2 = new THREE.Mesh(
+            new THREE.SphereGeometry(1.1 * s, 7, 5),
+            leaf,
+          );
+          cr2.scale.set(1.1, 0.5, 1.1);
+          cr2.position.set(x + 0.4 * s, 3.4 * s, z - 0.3 * s);
+          scene.add(cr2);
+        }
+      }
     };
-    // palms / trees on plaza lawn arcs
-    for (let i = 0; i < 18; i++) {
-      const a = -1.0 + (i / 17) * 2.0;
-      addTree(Math.sin(a) * 28, plazaZ + Math.cos(a) * 28 - 8, 0.9 + (i % 3) * 0.1);
+    const addBush = (x, z, s = 1) => {
+      const b = new THREE.Mesh(
+        new THREE.SphereGeometry(0.85 * s, 7, 5),
+        hedge,
+      );
+      b.scale.set(1.3, 0.55, 1.1);
+      b.position.set(x, 0.45 * s, z);
+      scene.add(b);
+    };
+
+    // Full rings of trees around the plaza (complete both halves)
+    for (let ring = 0; ring < 3; ring++) {
+      const r = 22 + ring * 10;
+      const count = 20 + ring * 8;
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * TAU + ring * 0.08;
+        const x = Math.sin(a) * r;
+        const z = plazaZ + Math.cos(a) * r;
+        addTree(x, z, 0.8 + (i % 4) * 0.1, (i + ring) % 3);
+        if (i % 2 === 0) addBush(Math.sin(a) * (r - 3.5), plazaZ + Math.cos(a) * (r - 3.5), 0.7);
+      }
     }
 
-    // Rectangular lawn islands around the ring (Genius&Gerry pattern)
+    // Continuous lawn ring around exterior foot
+    scene.add(
+      ringStrip(
+        EXT.footRx + 4,
+        EXT.footRz + 3,
+        0.02,
+        EXT.footRx + 16,
+        EXT.footRz + 13,
+        0.02,
+        160,
+        lawnMat,
+        1,
+      ),
+    );
+    scene.add(
+      ringStrip(
+        EXT.footRx + 18,
+        EXT.footRz + 15,
+        0.02,
+        EXT.footRx + 26,
+        EXT.footRz + 22,
+        0.02,
+        140,
+        lawnDark,
+        1,
+      ),
+    );
+
+    // Rectangular lawn islands around the ring (denser Genius&Gerry pattern)
     const patchSpecs = [];
-    for (let i = 0; i < 22; i++) {
-      const a = (i / 22) * TAU + 0.08;
-      const rr = EXT.footRx + 14 + (i % 3) * 5;
-      const rz = EXT.footRz + 12 + (i % 3) * 4;
+    for (let i = 0; i < 36; i++) {
+      const a = (i / 36) * TAU + 0.05;
+      const rr = EXT.footRx + 10 + (i % 4) * 4.5;
+      const rz = EXT.footRz + 8 + (i % 4) * 3.5;
       const [x, z] = ellipsePoint(rr, rz, a);
       patchSpecs.push({
         x,
         z,
         a,
-        w: 11 + (i % 4) * 2.2,
-        d: 8 + (i % 3) * 2,
+        w: 10 + (i % 5) * 2.0,
+        d: 7 + (i % 4) * 1.8,
       });
     }
+    // Extra plaza-side beds — mirrored both halves
     patchSpecs.push(
-      { x: -48, z: plazaZ + 6, a: 0, w: 18, d: 11 },
-      { x: 48, z: plazaZ + 6, a: 0, w: 18, d: 11 },
-      { x: -62, z: plazaZ - 20, a: 0.15, w: 14, d: 10 },
-      { x: 62, z: plazaZ - 20, a: -0.15, w: 14, d: 10 },
+      { x: -42, z: plazaZ + 8, a: 0, w: 22, d: 12 },
+      { x: 42, z: plazaZ + 8, a: 0, w: 22, d: 12 },
+      { x: -42, z: plazaZ - 8, a: 0, w: 22, d: 12 },
+      { x: 42, z: plazaZ - 8, a: 0, w: 22, d: 12 },
+      { x: -58, z: plazaZ - 12, a: 0.12, w: 16, d: 11 },
+      { x: 58, z: plazaZ - 12, a: -0.12, w: 16, d: 11 },
+      { x: -58, z: plazaZ + 12, a: -0.12, w: 16, d: 11 },
+      { x: 58, z: plazaZ + 12, a: 0.12, w: 16, d: 11 },
+      { x: -70, z: plazaZ + 2, a: 0.08, w: 14, d: 10 },
+      { x: 70, z: plazaZ + 2, a: -0.08, w: 14, d: 10 },
+      { x: -70, z: plazaZ - 18, a: 0.08, w: 14, d: 10 },
+      { x: 70, z: plazaZ - 18, a: -0.08, w: 14, d: 10 },
+      { x: -30, z: plazaZ + 22, a: 0, w: 16, d: 9 },
+      { x: 30, z: plazaZ + 22, a: 0, w: 16, d: 9 },
+      { x: -30, z: plazaZ - 26, a: 0, w: 16, d: 9 },
+      { x: 30, z: plazaZ - 26, a: 0, w: 16, d: 9 },
+      { x: 0, z: plazaZ + 28, a: 0, w: 24, d: 10 },
+      { x: 0, z: plazaZ - 30, a: 0, w: 24, d: 10 },
+      { x: -18, z: plazaZ, a: 0.4, w: 12, d: 8 },
+      { x: 18, z: plazaZ, a: -0.4, w: 12, d: 8 },
     );
     patchSpecs.forEach((p, i) => {
       const patch = new THREE.Mesh(
-        new THREE.BoxGeometry(p.w, 0.12, p.d),
-        bush,
+        new THREE.BoxGeometry(p.w, 0.14, p.d),
+        i % 2 ? bush : lawnLite,
       );
       patch.position.set(p.x, 0.0, p.z);
       patch.rotation.y = -p.a;
       scene.add(patch);
-      const n = 2 + (i % 3);
+      const n = 3 + (i % 4);
       for (let t = 0; t < n; t++) {
-        const ox = (t - (n - 1) / 2) * (p.w / (n + 0.5));
-        const oz = ((t % 2) - 0.5) * 2.0;
+        const ox = (t - (n - 1) / 2) * (p.w / (n + 0.35));
+        const oz = ((t % 2) - 0.5) * (p.d * 0.28);
         const ca = Math.cos(-p.a),
           sa = Math.sin(-p.a);
-        addTree(
-          p.x + ca * ox - sa * oz,
-          p.z + sa * ox + ca * oz,
-          0.8 + (t % 3) * 0.1,
-        );
+        const tx = p.x + ca * ox - sa * oz;
+        const tz = p.z + sa * ox + ca * oz;
+        addTree(tx, tz, 0.75 + (t % 4) * 0.12, t % 3);
+        if (t % 2 === 0) addBush(tx + 1.2, tz - 0.8, 0.65);
       }
     });
 
-    // Tree line along outer road edge
-    for (let i = 0; i < 56; i++) {
-      const a = (i / 56) * TAU;
-      const [x, z] = ellipsePoint(EXT.footRx + 8, EXT.footRz + 6, a);
-      if (Math.abs(Math.sin(a)) > 0.55 || i % 2 === 0)
-        addTree(x, z, 0.7 + (i % 4) * 0.08);
+    // Double tree ring along apron + outer road
+    for (let i = 0; i < 96; i++) {
+      const a = (i / 96) * TAU;
+      const [x0, z0] = ellipsePoint(EXT.footRx + 6, EXT.footRz + 5, a);
+      addTree(x0, z0, 0.72 + (i % 5) * 0.08, i % 3);
+      if (i % 2 === 0) {
+        const [x1, z1] = ellipsePoint(EXT.footRx + 12, EXT.footRz + 10, a + 0.02);
+        addTree(x1, z1, 0.65 + (i % 4) * 0.07, (i + 1) % 3);
+      }
+      if (i % 3 === 0) {
+        const [xb, zb] = ellipsePoint(EXT.footRx + 9, EXT.footRz + 7.5, a + 0.04);
+        addBush(xb, zb, 0.7);
+      }
+    }
+    // Outer boulevard tree line
+    for (let i = 0; i < 72; i++) {
+      const a = (i / 72) * TAU + 0.03;
+      const [x, z] = ellipsePoint(EXT.footRx + 32, EXT.footRz + 26, a);
+      addTree(x, z, 0.9 + (i % 3) * 0.15, i % 2 === 0 ? 1 : 0);
     }
 
-    // Parking lots near plaza (+Z sides)
+    // Hedge strips flanking entrance / VIP approach — both directions
+    [-1, 1].forEach((side) => {
+      for (let k = 0; k < 8; k++) {
+        const hx = side * (22 + k * 0.15);
+        for (const dir of [-1, 1]) {
+          const hz = plazaZ + dir * (8 + k * 3.2);
+          const strip = new THREE.Mesh(
+            new THREE.BoxGeometry(3.2, 1.1, 2.6),
+            hedge,
+          );
+          strip.position.set(hx, 0.55, hz);
+          scene.add(strip);
+          addTree(hx + side * 2.5, hz, 0.8, 1);
+        }
+      }
+    });
+
+    // Parking lots near plaza (+Z sides) with planted borders
     const carCols = [0xe8ecf0, 0x2a3344, 0xb01020, 0xc8a060, 0x6a7382];
     [-1, 1].forEach((side, si) => {
       const lot = new THREE.Mesh(
@@ -459,6 +595,17 @@ export function createStadium(opts = {}) {
       );
       lot.position.set(side * 72, -0.08, plazaZ - 8);
       scene.add(lot);
+      // green border around lot
+      const border = new THREE.Mesh(
+        new THREE.BoxGeometry(42, 0.16, 20),
+        lawnDark,
+      );
+      border.position.set(side * 72, -0.18, plazaZ - 8);
+      scene.add(border);
+      for (let t = 0; t < 5; t++) {
+        addTree(side * 72 + side * 22, plazaZ - 16 + t * 4, 0.75, t % 2);
+        addBush(side * 72 + side * 20, plazaZ - 14 + t * 3.5, 0.8);
+      }
       for (let row = 0; row < 2; row++) {
         for (let col = 0; col < 6; col++) {
           const car = new THREE.Mesh(
@@ -706,9 +853,13 @@ export function createStadium(opts = {}) {
     track.receiveShadow = true;
     scene.add(track);
 
-    // white concrete curbs
-    const curbMat = new THREE.MeshLambertMaterial({
-      color: 0xe8eef8,
+    // dark-blue apron / curbs beside the track (not the orange tartan)
+    const apronBlue = new THREE.MeshLambertMaterial({
+      color: 0x0d2a5c,
+      side: THREE.DoubleSide,
+    });
+    const apronBlueDeep = new THREE.MeshLambertMaterial({
+      color: 0x0a224c,
       side: THREE.DoubleSide,
     });
     scene.add(
@@ -720,7 +871,7 @@ export function createStadium(opts = {}) {
         TRACK.inRz,
         0.055,
         160,
-        curbMat,
+        apronBlue,
         40,
       ),
     );
@@ -733,7 +884,7 @@ export function createStadium(opts = {}) {
         TRACK.outRz + 0.45,
         0.055,
         160,
-        curbMat,
+        apronBlue,
         40,
       ),
     );
@@ -747,7 +898,7 @@ export function createStadium(opts = {}) {
         TRACK.outRz + 1.0,
         0.55,
         120,
-        concreteDark,
+        apronBlueDeep,
         1,
       ),
     );
@@ -1005,7 +1156,7 @@ export function createStadium(opts = {}) {
     const ROWS_UP = 14;
     const SECTIONS = 18; // wide concrete stair aisles between blocks
     const SEAT_SPACING = 0.62;
-    const AISLE_W = 2.35;
+    const AISLE_W = 2.65;
     const seats = [];
     const bluePal = [0x0a2e78, 0x0c3a8a, 0x1558c4, 0x1e6ad8, 0x2478e8, 0x0a2e70];
     const warmPal = [0xff9a12, 0xf07808, 0xffc428, 0xe86800, 0xffb020, 0xf5a010];
@@ -1130,7 +1281,7 @@ export function createStadium(opts = {}) {
       ),
     );
 
-    // grey paved buffer between track outer curb and first row (reference apron)
+    // dark-blue paved buffer between track outer curb and first row
     scene.add(
       ringStrip(
         TRACK.outRx + 0.5,
@@ -1141,7 +1292,7 @@ export function createStadium(opts = {}) {
         0.02,
         140,
         new THREE.MeshLambertMaterial({
-          color: 0xb8c0cc,
+          color: 0x0d2a5c,
           side: THREE.DoubleSide,
         }),
         1,
@@ -1158,7 +1309,10 @@ export function createStadium(opts = {}) {
         BOWL.inRz - 0.3,
         BOWL.y0 - 0.15,
         140,
-        concrete,
+        new THREE.MeshLambertMaterial({
+          color: 0x0a224c,
+          side: THREE.DoubleSide,
+        }),
         1,
       ),
     );
@@ -1262,7 +1416,7 @@ export function createStadium(opts = {}) {
               seat: i + 1,
               sec: s,
               label: (tier === 0 ? 101 : 201) + s,
-              occ: rng() < (tier === 0 ? 0.82 : 0.74),
+              occ: true, // every seat filled — complete crowd
             });
           }
         }
@@ -1291,64 +1445,81 @@ export function createStadium(opts = {}) {
       1,
     );
 
-    // radial concrete stairs (aligned through both tiers)
-    const aisleMat = new THREE.MeshLambertMaterial({ color: 0xd8dde6 });
-    for (let s = 0; s < SECTIONS; s++) {
-      const a = (s / SECTIONS) * TAU;
-      // lower tier stair
-      {
-        const [x0, z0] = ellipsePoint(BOWL.inRx + 0.4, BOWL.inRz + 0.3, a);
-        const [x1, z1] = ellipsePoint(BOWL.midRx - 0.5, BOWL.midRz - 0.4, a);
-        const len = Math.hypot(x1 - x0, z1 - z0);
-        const stair = new THREE.Mesh(
-          new THREE.BoxGeometry(AISLE_W * 0.92, 0.22, len + 0.4),
+    // Stepped radial aisles (one tread per row) — no long diagonal ramps
+    {
+      const aisleMat = new THREE.MeshLambertMaterial({ color: 0xe8ecf2 });
+      const noseMat = new THREE.MeshLambertMaterial({ color: 0xd4dae4 });
+      const placeStairs = (rows, y0, y1, rIn, rOut, rzIn, rzOut) => {
+        const count = SECTIONS * rows;
+        const drx = (rOut - rIn) / Math.max(1, rows - 1);
+        const drz = (rzOut - rzIn) / Math.max(1, rows - 1);
+        const treadZ = Math.max(0.58, Math.hypot(drx, drz) * 0.96);
+        const treadGeo = new THREE.BoxGeometry(AISLE_W * 0.92, 0.14, treadZ);
+        treadGeo.translate(0, 0.07, 0);
+        const noseGeo = new THREE.BoxGeometry(AISLE_W * 0.94, 0.05, 0.1);
+        noseGeo.translate(0, 0.145, treadZ * 0.5 - 0.05);
+        const treadMesh = new THREE.InstancedMesh(treadGeo, aisleMat, count);
+        const noseMesh = new THREE.InstancedMesh(noseGeo, noseMat, count);
+        treadMesh.frustumCulled = false;
+        noseMesh.frustumCulled = false;
+        const dm = new THREE.Object3D();
+        let ai = 0;
+        for (let s = 0; s < SECTIONS; s++) {
+          const a = (s / SECTIONS) * TAU;
+          for (let r = 0; r < rows; r++) {
+            const t = rows <= 1 ? 0 : r / (rows - 1);
+            const rx = rIn + (rOut - rIn) * t;
+            const rz = rzIn + (rzOut - rzIn) * t;
+            const y = y0 + (y1 - y0) * t;
+            const [x, z] = ellipsePoint(rx, rz, a);
+            // Face pitch so tread depth follows the rake
+            const yaw = Math.atan2(-x, -z);
+            dm.position.set(x, y + 0.02, z);
+            dm.rotation.set(0, yaw, 0);
+            dm.scale.set(1, 1, 1);
+            dm.updateMatrix();
+            treadMesh.setMatrixAt(ai, dm.matrix);
+            noseMesh.setMatrixAt(ai, dm.matrix);
+            ai++;
+          }
+        }
+        treadMesh.instanceMatrix.needsUpdate = true;
+        noseMesh.instanceMatrix.needsUpdate = true;
+        scene.add(treadMesh);
+        scene.add(noseMesh);
+      };
+
+      // Same rake as seat rows so the path sits in the clear aisle corridor
+      placeStairs(
+        ROWS_LOW,
+        BOWL.y0 + 0.55,
+        BOWL.midY - 0.55,
+        BOWL.inRx + 0.6,
+        BOWL.midRx - 1.5,
+        BOWL.inRz + 0.5,
+        BOWL.midRz - 1.2,
+      );
+      placeStairs(
+        ROWS_UP,
+        BOWL.upY0 + 0.35,
+        BOWL.y1 - 1.4,
+        BOWL.upInRx + 0.8,
+        BOWL.outRx - 5,
+        BOWL.upInRz + 0.6,
+        BOWL.outRz - 4,
+      );
+
+      // Concourse landing pads where lower aisles meet the mid walkway
+      for (let s = 0; s < SECTIONS; s++) {
+        const a = (s / SECTIONS) * TAU;
+        const [x, z] = ellipsePoint(BOWL.midRx - 0.2, BOWL.midRz - 0.15, a);
+        const pad = new THREE.Mesh(
+          new THREE.BoxGeometry(AISLE_W * 1.05, 0.12, 2.4),
           aisleMat,
         );
-        const my = (BOWL.y0 + BOWL.midY) * 0.5 - 0.1;
-        stair.position.set((x0 + x1) * 0.5, my, (z0 + z1) * 0.5);
-        stair.lookAt(x1, my + (BOWL.midY - BOWL.y0) * 0.35, z1);
-        scene.add(stair);
-        // stepped treads hint
-        for (let k = 0; k < 8; k++) {
-          const u = (k + 0.5) / 8;
-          const x = x0 + (x1 - x0) * u;
-          const z = z0 + (z1 - z0) * u;
-          const y = BOWL.y0 + (BOWL.midY - BOWL.y0) * u;
-          const tread = new THREE.Mesh(
-            new THREE.BoxGeometry(AISLE_W * 0.88, 0.12, 1.15),
-            aisleMat,
-          );
-          tread.position.set(x, y, z);
-          tread.rotation.y = -a;
-          scene.add(tread);
-        }
-      }
-      // upper tier stair (from elevated deck only)
-      {
-        const [x0, z0] = ellipsePoint(BOWL.upInRx + 0.5, BOWL.upInRz + 0.4, a);
-        const [x1, z1] = ellipsePoint(BOWL.outRx - 4, BOWL.outRz - 3.2, a);
-        const len = Math.hypot(x1 - x0, z1 - z0);
-        const stair = new THREE.Mesh(
-          new THREE.BoxGeometry(AISLE_W * 0.85, 0.22, len + 0.4),
-          aisleMat,
-        );
-        const my = (BOWL.upY0 + BOWL.y1) * 0.5;
-        stair.position.set((x0 + x1) * 0.5, my, (z0 + z1) * 0.5);
-        stair.lookAt(x1, my + 4, z1);
-        scene.add(stair);
-        for (let k = 0; k < 9; k++) {
-          const u = (k + 0.5) / 9;
-          const x = x0 + (x1 - x0) * u;
-          const z = z0 + (z1 - z0) * u;
-          const y = BOWL.upY0 + 0.2 + (BOWL.y1 - BOWL.upY0 - 1.2) * u;
-          const tread = new THREE.Mesh(
-            new THREE.BoxGeometry(AISLE_W * 0.8, 0.12, 1.2),
-            aisleMat,
-          );
-          tread.position.set(x, y, z);
-          tread.rotation.y = -a;
-          scene.add(tread);
-        }
+        pad.position.set(x, BOWL.midY + 0.08, z);
+        pad.rotation.y = Math.atan2(-x, -z);
+        scene.add(pad);
       }
     }
 
@@ -1714,54 +1885,6 @@ export function createStadium(opts = {}) {
       box.rotation.y = -a;
       scene.add(box);
     }
-
-    // dark openings recessed into the slope face
-    const holeMat = new THREE.MeshLambertMaterial({ color: 0x1a1e24 });
-    for (let i = 0; i < 14; i++) {
-      const a = (i / 14) * TAU + 0.05;
-      const t = 0.22; // low on the slope
-      const rx = BOWL.outRx + slopeRun * (1 - t);
-      const rz = BOWL.outRz + slopeRun * 0.82 * (1 - t);
-      const y = 0.08 + slopeH * t;
-      const [x, z] = ellipsePoint(rx, rz, a);
-      const hole = new THREE.Mesh(new THREE.BoxGeometry(5.4, 3.2, 4.2), holeMat);
-      hole.position.set(x, y + 1.4, z);
-      hole.rotation.y = -a;
-      // tilt hole to follow ~60° slope
-      hole.rotateX(-Math.PI / 6);
-      scene.add(hole);
-    }
-
-    // access ramps cut into the 120° slope
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * TAU + 0.18;
-      const [x0, z0] = ellipsePoint(baseRx - 1, baseRz - 1, a);
-      const [x1, z1] = ellipsePoint(BOWL.outRx + 1, BOWL.outRz + 1, a);
-      const len = Math.hypot(x1 - x0, z1 - z0);
-      const ramp = new THREE.Mesh(
-        new THREE.BoxGeometry(13, 0.7, len),
-        concrete,
-      );
-      ramp.position.set((x0 + x1) * 0.5, slopeH * 0.42, (z0 + z1) * 0.5);
-      ramp.lookAt(x1, BOWL.y1 * 0.85, z1);
-      ramp.rotateX(-Math.PI / 6);
-      scene.add(ramp);
-      [-1, 1].forEach((side) => {
-        const wall = new THREE.Mesh(
-          new THREE.BoxGeometry(0.4, 1.5, len * 0.88),
-          slopeDark,
-        );
-        const ox = Math.cos(a + Math.PI / 2) * side * 6.0;
-        const oz = Math.sin(a + Math.PI / 2) * side * 6.0;
-        wall.position.set(
-          ramp.position.x + ox,
-          ramp.position.y + 0.5,
-          ramp.position.z + oz,
-        );
-        wall.rotation.copy(ramp.rotation);
-        scene.add(wall);
-      });
-    }
   }
 
   /* ---------- main entrance (+Z): twin beige halls + vertical-slat facade ---------- */
@@ -1957,6 +2080,303 @@ export function createStadium(opts = {}) {
     mkBoard(1, 'CAIRO STADIUM', homeShort, awayShort);
   }
 
+  /* ---------- big screen on stand facing VIP (−Z opposite presidential box) ---------- */
+  {
+    const homeShort = (metaInfo.teams?.home || 'AHLY').split(' ').pop();
+    const awayShort = (metaInfo.teams?.away || 'ZAMALEK').split(' ').pop();
+    const zScr = -(BOWL.outRz - 5.5);
+    const yScr = BOWL.y1 + 5.2;
+    const frameMat = new THREE.MeshLambertMaterial({ color: 0x0c2a58 });
+    const frameDark = new THREE.MeshLambertMaterial({ color: 0x081828 });
+
+    // Thick blue outer frame (matches Genius&Gerry top-stand screen)
+    const outer = new THREE.Mesh(
+      new THREE.BoxGeometry(48, 16.5, 2.4),
+      frameMat,
+    );
+    outer.position.set(0, yScr, zScr);
+    scene.add(outer);
+    const inner = new THREE.Mesh(
+      new THREE.BoxGeometry(44, 13.2, 1.6),
+      frameDark,
+    );
+    inner.position.set(0, yScr, zScr + 0.35);
+    scene.add(inner);
+    // Side stilts into the rim
+    [-1, 1].forEach((s) => {
+      const leg = new THREE.Mesh(
+        new THREE.BoxGeometry(2.2, 8, 2.0),
+        frameMat,
+      );
+      leg.position.set(s * 20, BOWL.y1 + 1.2, zScr);
+      scene.add(leg);
+    });
+
+    const cv = document.createElement('canvas');
+    cv.width = 1024;
+    cv.height = 384;
+    const ctx = cv.getContext('2d');
+    const tex = new THREE.CanvasTexture(cv);
+    tex.encoding = THREE.sRGBEncoding;
+    const paint = (sc) => {
+      const w = cv.width,
+        h = cv.height;
+      ctx.fillStyle = '#03060c';
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = 'rgba(40,120,200,0.55)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(10, 10, w - 20, h - 20);
+      ctx.fillStyle = '#6e0000';
+      ctx.fillRect(48, 90, 180, 72);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(w - 228, 90, 180, 72);
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(w - 228, 90, 180, 72);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#c8d8f0';
+      ctx.font = '700 36px sans-serif';
+      ctx.fillText('CAIRO INTERNATIONAL', w / 2, 56);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '800 28px sans-serif';
+      ctx.fillText(homeShort, 138, 136);
+      ctx.fillStyle = '#111111';
+      ctx.fillText(awayShort, w - 138, 136);
+      ctx.fillStyle = '#3bc4ff';
+      ctx.font = '800 110px sans-serif';
+      ctx.fillText(`${sc.home}  —  ${sc.away}`, w / 2, 250);
+      ctx.fillStyle = '#f0c014';
+      ctx.font = '700 32px sans-serif';
+      ctx.fillText(
+        sc.minute < 90 ? `LIVE · ${sc.minute}'` : 'FULL TIME',
+        w / 2,
+        330,
+      );
+      tex.needsUpdate = true;
+    };
+    paint({ home: 0, away: 0, minute: 0 });
+    scoreboardPainters.push(paint);
+
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(42, 12.2),
+      new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }),
+    );
+    // Face the pitch / VIP (+Z)
+    screen.position.set(0, yScr, zScr + 1.35);
+    scene.add(screen);
+  }
+
+  /* ---------- stadium crowd audio (Mixkit) · orbit = ambience only · seat = cheer ---------- */
+  let AC = null,
+    crowdMaster = null,
+    ambGain = null,
+    cheerGain = null,
+    whoopTimer = null,
+    audioReady = false,
+    audioLoading = null,
+    muted = false,
+    audioNear = false; // true in seat POV
+  const SFX = {
+    ambience: '/sounds/crowd-ambience.mp3',
+    cheer: '/sounds/crowd-cheer.mp3',
+    cheerBig: '/sounds/crowd-cheer-big.mp3',
+    yell: '/sounds/crowd-yell.mp3',
+    stadium: '/sounds/crowd-stadium.mp3',
+    chant: '/sounds/crowd-chant.mp3',
+  };
+  const buffers = {};
+  async function loadBuffer(key, url) {
+    const res = await fetch(url);
+    const arr = await res.arrayBuffer();
+    buffers[key] = await AC.decodeAudioData(arr.slice(0));
+  }
+  function playBuffer(key, opts) {
+    opts = opts || {};
+    if (!AC || !buffers[key] || muted) return null;
+    const src = AC.createBufferSource();
+    src.buffer = buffers[key];
+    src.loop = !!opts.loop;
+    if (opts.rate) src.playbackRate.value = opts.rate;
+    const g = AC.createGain();
+    const t = AC.currentTime + (opts.delay || 0);
+    const vol = opts.gain == null ? 1 : opts.gain;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol, t + (opts.fadeIn || 0.08));
+    src.connect(g);
+    g.connect(opts.dest || crowdMaster);
+    src.start(t);
+    return { src, g };
+  }
+  function rampNode(node, level, sec) {
+    if (!AC || !node) return;
+    const t = AC.currentTime;
+    const v = muted ? 0.0001 : Math.max(0.0001, level);
+    node.gain.cancelScheduledValues(t);
+    node.gain.setValueAtTime(Math.max(0.0001, node.gain.value), t);
+    node.gain.linearRampToValueAtTime(v, t + (sec == null ? 0.7 : sec));
+  }
+  /** Orbit = crowd ambience only · seat = ambience + chant + whoops/cheers */
+  function setAudioNear(near) {
+    audioNear = !!near;
+    if (!AC || !audioReady) return;
+    if (audioNear) {
+      rampNode(ambGain, 0.85, 0.7);
+      rampNode(cheerGain, 0.55, 0.7);
+      setCrowd(0.55);
+    } else {
+      rampNode(ambGain, 1, 0.8);
+      rampNode(cheerGain, 0.0001, 0.5); // kill chant / cheer bed from afar
+      setCrowd(0.34);
+    }
+  }
+  function ensureAudio() {
+    if (AC && audioReady) {
+      if (AC.state === 'suspended') AC.resume();
+      return;
+    }
+    if (audioLoading) return;
+    try {
+      AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) {
+      return;
+    }
+    audioLoading = (async () => {
+      try {
+        crowdMaster = AC.createGain();
+        crowdMaster.gain.value = 0.0001;
+        const comp = AC.createDynamicsCompressor();
+        comp.threshold.value = -18;
+        comp.knee.value = 12;
+        comp.ratio.value = 2.6;
+        comp.attack.value = 0.02;
+        comp.release.value = 0.25;
+        crowdMaster.connect(comp);
+        comp.connect(AC.destination);
+
+        ambGain = AC.createGain();
+        cheerGain = AC.createGain();
+        ambGain.gain.value = 0.0001;
+        cheerGain.gain.value = 0.0001;
+        ambGain.connect(crowdMaster);
+        cheerGain.connect(crowdMaster);
+
+        await Promise.all([
+          loadBuffer('ambience', SFX.ambience),
+          loadBuffer('cheer', SFX.cheer),
+          loadBuffer('cheerBig', SFX.cheerBig),
+          loadBuffer('yell', SFX.yell),
+          loadBuffer('stadium', SFX.stadium),
+          loadBuffer('chant', SFX.chant),
+        ]);
+
+        // Distant bed: pure crowd ambience only
+        playBuffer('ambience', {
+          loop: true,
+          gain: 0.95,
+          fadeIn: 1.4,
+          dest: ambGain,
+        });
+        // Near bed: soft chant (muted while orbiting)
+        playBuffer('chant', {
+          loop: true,
+          gain: 0.45,
+          fadeIn: 2.0,
+          rate: 0.98,
+          dest: cheerGain,
+        });
+
+        audioReady = true;
+        if (AC.state === 'suspended') await AC.resume();
+        scheduleWhoops();
+        setAudioNear(mode === 'seat');
+      } catch (err) {
+        console.warn('Cairo stadium audio failed to load', err);
+      } finally {
+        audioLoading = null;
+      }
+    })();
+  }
+  function scheduleWhoops() {
+    if (whoopTimer) clearTimeout(whoopTimer);
+    const tick = () => {
+      if (!AC || muted || !audioReady || disposed) return;
+      if (audioNear) fireWhoop();
+      whoopTimer = setTimeout(tick, 3800 + Math.random() * 6500);
+    };
+    whoopTimer = setTimeout(tick, 2800);
+  }
+  function fireWhoop() {
+    if (!AC || muted || !audioReady || !audioNear) return;
+    const pool = ['yell', 'stadium', 'cheer'];
+    const key = pool[(Math.random() * pool.length) | 0];
+    playBuffer(key, {
+      gain: 0.2 + Math.random() * 0.25,
+      rate: 0.94 + Math.random() * 0.12,
+      dest: cheerGain,
+    });
+  }
+  function setCrowd(level) {
+    if (!AC || !crowdMaster) return;
+    const t = AC.currentTime;
+    crowdMaster.gain.cancelScheduledValues(t);
+    crowdMaster.gain.setValueAtTime(
+      Math.max(0.0001, crowdMaster.gain.value),
+      t,
+    );
+    crowdMaster.gain.linearRampToValueAtTime(muted ? 0.0001 : level, t + 0.9);
+  }
+  function cheer() {
+    ensureAudio();
+    const go = () => {
+      if (!AC || muted || !audioReady) return;
+      exciteU.value = 1.35;
+      gsap.to(exciteU, { value: 1, duration: 2.4, ease: 'power2.out' });
+      // Cheer bursts only in seat POV — orbit stays ambience-only
+      if (!audioNear) {
+        const cur = Math.max(0.0001, crowdMaster.gain.value);
+        const t = AC.currentTime;
+        crowdMaster.gain.cancelScheduledValues(t);
+        crowdMaster.gain.setValueAtTime(cur, t);
+        crowdMaster.gain.linearRampToValueAtTime(
+          Math.min(0.5, cur + 0.08),
+          t + 0.25,
+        );
+        crowdMaster.gain.linearRampToValueAtTime(cur, t + 2.2);
+        return;
+      }
+      const t = AC.currentTime;
+      playBuffer('cheerBig', {
+        gain: 0.9,
+        fadeIn: 0.05,
+        dest: cheerGain,
+      });
+      playBuffer('cheer', {
+        gain: 0.55,
+        delay: 0.1,
+        rate: 1.02,
+        dest: cheerGain,
+      });
+      playBuffer('yell', {
+        gain: 0.35,
+        delay: 0.18,
+        rate: 0.97,
+        dest: cheerGain,
+      });
+      if (crowdMaster) {
+        const cur = Math.max(0.0001, crowdMaster.gain.value);
+        crowdMaster.gain.cancelScheduledValues(t);
+        crowdMaster.gain.setValueAtTime(cur, t);
+        crowdMaster.gain.linearRampToValueAtTime(
+          Math.min(0.9, cur + 0.35),
+          t + 0.2,
+        );
+        crowdMaster.gain.linearRampToValueAtTime(cur, t + 2.8);
+      }
+    };
+    if (audioReady) go();
+    else if (audioLoading) audioLoading.then(go);
+  }
+
   /* ---------- players + ball (same match system as Misr) ---------- */
   const matchPlay = createMatchPlay(scene, {
     rng,
@@ -1981,6 +2401,7 @@ export function createStadium(opts = {}) {
     ],
     onScore: (sc) => {
       for (const paint of scoreboardPainters) paint(sc);
+      cheer();
     },
   });
 
@@ -2018,8 +2439,24 @@ export function createStadium(opts = {}) {
       emissive: 0x8890a0,
       emissiveIntensity: 0.15,
     });
+    const housingMat = new THREE.MeshLambertMaterial({
+      color: 0x3a424c,
+      emissive: 0x1a222c,
+      emissiveIntensity: 0.12,
+    });
+    const frameMat = new THREE.MeshLambertMaterial({
+      color: 0x5a6570,
+      emissive: 0x2a323c,
+      emissiveIntensity: 0.1,
+    });
     const lampGlow = new THREE.MeshBasicMaterial({
-      color: 0xffe8b8,
+      color: 0xfff2c8,
+      toneMapped: false,
+    });
+    const lampLens = new THREE.MeshBasicMaterial({
+      color: 0xffe8a0,
+      transparent: true,
+      opacity: 0.92,
       toneMapped: false,
     });
     const baseBlue = new THREE.MeshLambertMaterial({
@@ -2027,13 +2464,14 @@ export function createStadium(opts = {}) {
       emissive: 0x0a3060,
       emissiveIntensity: 0.25,
     });
+    const railMat = new THREE.MeshLambertMaterial({ color: 0xb8c0c8 });
     const haloMat = new THREE.SpriteMaterial({
       map: glowSprite,
       color: 0xffd9a0,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
       transparent: true,
-      opacity: 0.4,
+      opacity: 0.45,
     });
     const up = new THREE.Vector3(0, 1, 0);
     const towerH = 48;
@@ -2108,57 +2546,122 @@ export function createStadium(opts = {}) {
         xb.rotation.y = Math.PI / 4;
         tower.add(xb);
       }
-      const bankY = towerH + 1.5;
-      const bank = new THREE.Mesh(
-        new THREE.BoxGeometry(10, 3.2, 11),
-        new THREE.MeshLambertMaterial({
-          color: 0x8a949e,
-          emissive: 0x44505a,
-          emissiveIntensity: 0.2,
-        }),
+      const headY = towerH + 0.6;
+      // Maintenance platform under the lamp bank
+      const platform = new THREE.Mesh(
+        new THREE.BoxGeometry(12, 0.35, 8),
+        frameMat,
       );
-      bank.position.set(0, bankY, 0);
-      tower.add(bank);
-      for (let u = -1; u <= 1; u++) {
-        for (let v = -1; v <= 1; v++) {
-          const lamp = new THREE.Mesh(
-            new THREE.BoxGeometry(2.2, 0.4, 2.2),
+      platform.position.set(0, headY, 0.8);
+      tower.add(platform);
+      [-1, 1].forEach((side) => {
+        const rail = new THREE.Mesh(
+          new THREE.BoxGeometry(11.5, 0.12, 0.12),
+          railMat,
+        );
+        rail.position.set(0, headY + 1.1, 0.8 + side * 3.6);
+        tower.add(rail);
+        for (let p = -2; p <= 2; p++) {
+          const post = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.06, 0.06, 1.1, 5),
+            railMat,
+          );
+          post.position.set(p * 2.4, headY + 0.55, 0.8 + side * 3.6);
+          tower.add(post);
+        }
+      });
+
+      // Realistic head: housing tipped down toward the pitch
+      const head = new THREE.Group();
+      head.position.set(0, headY + 2.4, 1.6);
+      head.rotation.x = 0.48;
+      tower.add(head);
+
+      const housing = new THREE.Mesh(
+        new THREE.BoxGeometry(11.5, 4.2, 2.4),
+        housingMat,
+      );
+      housing.position.set(0, 0, -0.9);
+      head.add(housing);
+      const hood = new THREE.Mesh(
+        new THREE.BoxGeometry(11.8, 0.35, 3.6),
+        frameMat,
+      );
+      hood.position.set(0, 2.0, 0.2);
+      hood.rotation.x = -0.15;
+      head.add(hood);
+      [-1, 1].forEach((s) => {
+        const cheek = new THREE.Mesh(
+          new THREE.BoxGeometry(0.35, 4.0, 3.2),
+          housingMat,
+        );
+        cheek.position.set(s * 5.7, 0, 0.1);
+        head.add(cheek);
+      });
+      const bezel = new THREE.Mesh(
+        new THREE.BoxGeometry(11.2, 3.8, 0.35),
+        frameMat,
+      );
+      bezel.position.set(0, 0, 0.55);
+      head.add(bezel);
+
+      // 4×3 individual floodlight fixtures
+      for (let col = 0; col < 4; col++) {
+        for (let row = 0; row < 3; row++) {
+          const lx = (col - 1.5) * 2.55;
+          const ly = (row - 1) * 1.15;
+          const can = new THREE.Mesh(
+            new THREE.BoxGeometry(2.2, 0.95, 1.4),
+            housingMat,
+          );
+          can.position.set(lx, ly, 0.15);
+          head.add(can);
+          const lens = new THREE.Mesh(
+            new THREE.BoxGeometry(1.85, 0.72, 0.18),
+            lampLens,
+          );
+          lens.position.set(lx, ly, 0.95);
+          head.add(lens);
+          const glow = new THREE.Mesh(
+            new THREE.BoxGeometry(1.6, 0.55, 0.08),
             lampGlow,
           );
-          lamp.position.set(u * 2.8, bankY - 1.5, v * 3.0);
-          tower.add(lamp);
+          glow.position.set(lx, ly, 1.08);
+          head.add(glow);
           const halo = new THREE.Sprite(haloMat.clone());
-          halo.position.set(u * 2.8, bankY - 1.3, v * 3.0);
-          halo.scale.setScalar(3.2);
-          tower.add(halo);
+          halo.position.set(lx, ly, 1.35);
+          halo.scale.setScalar(2.8);
+          head.add(halo);
         }
       }
       const bigHalo = new THREE.Sprite(haloMat.clone());
-      bigHalo.position.set(0, bankY + 1, 0);
-      bigHalo.scale.setScalar(9);
-      tower.add(bigHalo);
+      bigHalo.position.set(0, 0, 2.2);
+      bigHalo.scale.setScalar(14);
+      head.add(bigHalo);
 
-      // Vertical mast sitting on the ledge / shell
+      // Mast faces the pitch
       const baseY = y + 2.2;
       tower.position.set(x - ox * 0.6, baseY, z - oz * 0.6);
-      tower.rotation.y = -a;
+      tower.rotation.y = Math.atan2(-x, -z);
       scene.add(tower);
+      tower.updateMatrixWorld(true);
+      const lampWorld = new THREE.Vector3(0, 0, 1.4);
+      head.localToWorld(lampWorld);
 
-      const lampWorldY = baseY + bankY;
       const spotL = new THREE.SpotLight(
         0xffe8c8,
-        0.45,
+        0.5,
         0,
-        Math.PI / 3.2,
-        0.72,
-        1.35,
+        Math.PI / 3.4,
+        0.7,
+        1.3,
       );
-      spotL.position.set(tower.position.x, lampWorldY, tower.position.z);
+      spotL.position.copy(lampWorld);
       spotL.target = floodTargets;
       scene.add(spotL);
 
-      const pl = new THREE.PointLight(0xfff0d0, 0.22, 200, 2);
-      pl.position.set(tower.position.x, lampWorldY, tower.position.z);
+      const pl = new THREE.PointLight(0xfff0d0, 0.2, 200, 2);
+      pl.position.copy(lampWorld);
       scene.add(pl);
 
       for (let c = 0; c < 2; c++) {
@@ -2167,11 +2670,7 @@ export function createStadium(opts = {}) {
           0.2,
           (Math.random() - 0.5) * 38,
         );
-        const from = new THREE.Vector3(
-          tower.position.x,
-          lampWorldY - 1,
-          tower.position.z,
-        );
+        const from = lampWorld.clone();
         const lenC = from.distanceTo(to);
         const cone = new THREE.Mesh(
           new THREE.CylinderGeometry(1.2, 14, lenC, 12, 1, true),
@@ -2247,6 +2746,7 @@ export function createStadium(opts = {}) {
     dock: $('dock'),
     backbar: $('backbar'),
     bkExit: $('bk-exit'),
+    bkSnd: $('bk-snd'),
     sbHint: $('sb-hint'),
     d3d: $('d-3d'),
   };
@@ -2449,6 +2949,9 @@ export function createStadium(opts = {}) {
     }
     captureView(info.i);
     toast('Spectator view · drag to look around · Esc to exit', 3200);
+    ensureAudio();
+    setAudioNear(true);
+    cheer();
   }
   function flyToSeat(i) {
     if (!seatSys) return;
@@ -2458,6 +2961,8 @@ export function createStadium(opts = {}) {
     hideTip();
     applySelection(i);
     updatePanel(info, 'previewing');
+    ensureAudio();
+    setAudioNear(true);
     if (ui.pImg) ui.pImg.classList.remove('ready');
     if (ui.pPh) ui.pPh.style.display = 'grid';
     if (mode === 'orbit')
@@ -2512,6 +3017,7 @@ export function createStadium(opts = {}) {
     if (ui.backbar) ui.backbar.classList.remove('show');
     if (ui.sbHint) ui.sbHint.classList.remove('show');
     if (ui.dock) ui.dock.classList.remove('hidden');
+    setAudioNear(false);
     orbit.theta = orbit.thetaT = lastOrbit.theta;
     orbit.phi = orbit.phiT = lastOrbit.phi;
     orbit.radius = orbit.radiusT = lastOrbit.radius;
@@ -2582,6 +3088,8 @@ export function createStadium(opts = {}) {
     }
     userInteracted = true;
     canvas.classList.add('dragging');
+    ensureAudio();
+    setAudioNear(mode === 'seat');
   });
   on(canvas, 'pointermove', (e) => {
     if (!pointers.has(e.pointerId)) {
@@ -2729,6 +3237,12 @@ export function createStadium(opts = {}) {
     );
   });
   bind('bk-exit', exitSeatMode);
+  bind('bk-snd', () => {
+    muted = !muted;
+    if (ui.bkSnd) ui.bkSnd.style.opacity = muted ? 0.4 : 1;
+    ensureAudio();
+    setAudioNear(mode === 'seat');
+  });
   bind('checkout', () => {
     if (mode === 'seat') return;
     if (currentInfo) flyToSeat(currentInfo.i);
@@ -2860,6 +3374,14 @@ export function createStadium(opts = {}) {
       if (disposed) return;
       disposed = true;
       cancelAnimationFrame(rafId);
+      if (whoopTimer) clearTimeout(whoopTimer);
+      try {
+        if (AC && AC.state !== 'closed') AC.close();
+      } catch (_) {}
+      AC = null;
+      crowdMaster = null;
+      ambGain = cheerGain = null;
+      audioReady = false;
       try {
         gsap.killTweensOf('*');
       } catch (_) {}
