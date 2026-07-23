@@ -122,6 +122,21 @@
           <button class="sq-btn" id="cc-zout" aria-label="Zoom out">−</button>
         </div>
       </div>
+      <div class="crowd-capacity-control">
+        <label for="crowd-capacity">
+          Crowd capacity
+          <output id="crowd-capacity-value" for="crowd-capacity">80%</output>
+        </label>
+        <input
+          id="crowd-capacity"
+          type="range"
+          min="0"
+          max="100"
+          step="10"
+          value="80"
+          aria-label="Crowd capacity percentage"
+        />
+      </div>
       <footer>
         <svg
           viewBox="0 0 24 24"

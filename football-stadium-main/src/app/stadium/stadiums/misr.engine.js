@@ -23,6 +23,7 @@ export function createStadium(opts = {}) {
   const disposers = [];
   let disposed = false;
   let rafId = 0;
+  const crowdMeshes = [];
   const on = (target, type, fn, options) => {
     if (!target) return;
     target.addEventListener(type, fn, options);
@@ -2950,8 +2951,13 @@ export function createStadium(opts = {}) {
 
       /* ---------- seated crowd — detailed fans, halves in team colours ---------- */
       {
-        const occ = [];
-        for (let i = 0; i < SEAT_COUNT; i++) if (!meta.avail[i]) occ.push(i);
+        // Full capacity with randomized instance order. Reducing the rendered
+        // count now thins supporters evenly instead of removing whole rows.
+        const occ = Array.from({ length: SEAT_COUNT }, (_, i) => i);
+        for (let i = occ.length - 1; i > 0; i--) {
+          const j = Math.floor(rng() * (i + 1));
+          [occ[i], occ[j]] = [occ[j], occ[i]];
+        }
         const N = occ.length;
         // body parts (more silhouette detail when zoomed)
         const shirtGeo = (() => {
@@ -3141,6 +3147,7 @@ export function createStadium(opts = {}) {
           m.instanceMatrix.needsUpdate = true;
           if (m.instanceColor) m.instanceColor.needsUpdate = true;
           scene.add(m);
+          crowdMeshes.push(m);
         });
         document.getElementById("loader-text").textContent =
           "Seating " + N.toLocaleString() + " fans…";
@@ -4510,6 +4517,12 @@ export function createStadium(opts = {}) {
       return {
         id: metaInfo.id,
         canvas,
+        setCrowdCapacity(percent) {
+          const ratio = THREE.MathUtils.clamp(Number(percent) / 100, 0, 1);
+          crowdMeshes.forEach((mesh) => {
+            mesh.count = Math.round(mesh.instanceMatrix.count * ratio);
+          });
+        },
         dispose() {
           if (disposed) return;
           disposed = true;

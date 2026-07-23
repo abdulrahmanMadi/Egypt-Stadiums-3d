@@ -11,10 +11,12 @@ import { Subscription } from 'rxjs';
 import {
   disposeActiveStadium,
   getActiveStadiumId,
+  getCrowdCapacity,
   getStadiumMeta,
   initStadium,
   otherStadiumId,
   resolveStadiumIdFromRoute,
+  setCrowdCapacity,
   stadiumRouteSlug,
 } from './stadium/stadium.engine.js';
 
@@ -41,6 +43,27 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
     const kickerEl = document.getElementById('ss-kicker');
     const nameEl = document.getElementById('ss-name');
     const locEl = document.getElementById('ss-loc');
+    const crowdSlider = document.getElementById(
+      'crowd-capacity',
+    ) as HTMLInputElement | null;
+    const crowdValue = document.getElementById(
+      'crowd-capacity-value',
+    ) as HTMLOutputElement | null;
+
+    if (crowdSlider) {
+      const initialCapacity = getCrowdCapacity();
+      crowdSlider.value = String(initialCapacity);
+      if (crowdValue) crowdValue.value = `${initialCapacity}%`;
+      const onCapacityInput = () => {
+        const capacity = Number(crowdSlider.value);
+        setCrowdCapacity(capacity);
+        if (crowdValue) crowdValue.value = `${capacity}%`;
+      };
+      crowdSlider.addEventListener('input', onCapacityInput);
+      this.cleanupUi.push(() =>
+        crowdSlider.removeEventListener('input', onCapacityInput),
+      );
+    }
 
     const paintTarget = (currentId: string) => {
       const next = getStadiumMeta(otherStadiumId(currentId));

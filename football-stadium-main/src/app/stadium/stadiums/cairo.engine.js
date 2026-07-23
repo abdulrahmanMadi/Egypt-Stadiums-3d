@@ -97,6 +97,7 @@ export function createStadium(opts = {}) {
   const disposers = [];
   let disposed = false;
   let rafId = 0;
+  const crowdMeshes = [];
   const on = (target, type, fn, options) => {
     target.addEventListener(type, fn, options);
     disposers.push(() => target.removeEventListener(type, fn, options));
@@ -1747,7 +1748,13 @@ export function createStadium(opts = {}) {
     };
 
     /* ---------- seated crowd (Ahly / Zamalek halves) ---------- */
-    const occupied = seats.filter((s) => s.occ);
+    // Build the full capacity, then randomize instance order so percentage
+    // throttling distributes supporters across the whole bowl instead of rows.
+    const occupied = seats.slice();
+    for (let i = occupied.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [occupied[i], occupied[j]] = [occupied[j], occupied[i]];
+    }
     const N = occupied.length;
     const bodyGeo = (() => {
       const torso = new THREE.BoxGeometry(0.36, 0.46, 0.24);
@@ -1881,6 +1888,7 @@ export function createStadium(opts = {}) {
       m.instanceMatrix.needsUpdate = true;
       if (m.instanceColor) m.instanceColor.needsUpdate = true;
       scene.add(m);
+      crowdMeshes.push(m);
     });
 
     if (loaderText) {
@@ -3736,6 +3744,12 @@ export function createStadium(opts = {}) {
   return {
     id: metaInfo.id,
     canvas,
+    setCrowdCapacity(percent) {
+      const ratio = THREE.MathUtils.clamp(Number(percent) / 100, 0, 1);
+      crowdMeshes.forEach((mesh) => {
+        mesh.count = Math.round(mesh.instanceMatrix.count * ratio);
+      });
+    },
     dispose() {
       if (disposed) return;
       disposed = true;

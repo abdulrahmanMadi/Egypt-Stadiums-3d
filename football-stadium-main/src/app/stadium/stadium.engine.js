@@ -19,6 +19,27 @@ export {
 let active = null;
 /** @type {Promise<any> | null} */
 let switching = null;
+let crowdCapacityPercent = 80;
+
+try {
+  const storedCapacity = Number(localStorage.getItem('crowdCapacityPercentV2'));
+  if (Number.isFinite(storedCapacity)) {
+    crowdCapacityPercent = Math.max(0, Math.min(100, storedCapacity));
+  }
+} catch (_) {}
+
+export function getCrowdCapacity() {
+  return crowdCapacityPercent;
+}
+
+export function setCrowdCapacity(percent) {
+  const value = Math.max(0, Math.min(100, Number(percent) || 0));
+  crowdCapacityPercent = value;
+  try {
+    localStorage.setItem('crowdCapacityPercentV2', String(value));
+  } catch (_) {}
+  active?.setCrowdCapacity?.(value);
+}
 
 function applyBranding(meta) {
   const nameEl = document.querySelector('.brand-name');
@@ -174,6 +195,7 @@ export async function initStadium(stadiumId = DEFAULT_STADIUM_ID) {
       });
       if (!handle.canvas) handle.canvas = getLiveCanvas();
       active = handle;
+      handle.setCrowdCapacity?.(crowdCapacityPercent);
       try {
         localStorage.setItem('stadiumId', id);
       } catch (_) {}
