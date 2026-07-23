@@ -3883,11 +3883,8 @@ export function createStadium(opts = {}) {
           }
           hideTip();
         } else if (mode === "seat") {
-          seatView.yawOff = THREE.MathUtils.clamp(
-            seatView.yawOff - dx * 0.0032,
-            -1.5,
-            1.5,
-          );
+          // Unrestricted horizontal look for a complete 360° spectator view.
+          seatView.yawOff -= dx * 0.0032;
           seatView.pitchOff = THREE.MathUtils.clamp(
             seatView.pitchOff + dy * 0.0024,
             -0.55,
