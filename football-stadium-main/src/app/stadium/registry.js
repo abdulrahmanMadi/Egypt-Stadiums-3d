@@ -37,6 +37,8 @@ export const STADIUM_CATALOG = [
     location: 'New Administrative Capital',
     subtitle: 'Stadium View',
     seats: true,
+    previewImage: '/previews/new-administrative-capital-orbit.png',
+    description: 'Explore Egypt’s new national stadium and its multi-tier bowl.',
   },
   {
     id: 'cairo',
@@ -45,6 +47,8 @@ export const STADIUM_CATALOG = [
     location: 'Nasr City, Cairo',
     subtitle: 'Stadium View',
     seats: true,
+    previewImage: '/previews/cairo-orbit.png',
+    description: 'Experience Cairo’s historic derby venue from every angle.',
     teams: { home: 'AL AHLY', away: 'ZAMALEK' },
     flagHome: 'ahly',
     flagAway: 'zam',

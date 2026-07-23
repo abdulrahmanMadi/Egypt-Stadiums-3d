@@ -7,17 +7,24 @@ import {
   PLATFORM_ID,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { combineLatest, Subscription } from 'rxjs';
 import {
   disposeActiveStadium,
   getActiveStadiumId,
   getCrowdCapacity,
+  getCurrentSeat,
+  getEnvironment,
+  getQualityMode,
   getStadiumMeta,
   initStadium,
+  openSeat,
   otherStadiumId,
   resolveStadiumIdFromRoute,
   setCrowdCapacity,
+  setEnvironment,
+  setQualityMode,
   stadiumRouteSlug,
+  toggleFullscreen,
 } from './stadium/stadium.engine.js';
 
 @Component({
@@ -65,6 +72,84 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
       );
     }
 
+    const qualitySelect = document.getElementById(
+      'quality-mode',
+    ) as HTMLSelectElement | null;
+    const timeSelect = document.getElementById(
+      'time-of-day',
+    ) as HTMLSelectElement | null;
+    const weatherSelect = document.getElementById(
+      'weather-mode',
+    ) as HTMLSelectElement | null;
+    const fullscreenButton = document.getElementById(
+      'fullscreen-toggle',
+    ) as HTMLButtonElement | null;
+    const shareButton = document.getElementById(
+      'share-seat',
+    ) as HTMLButtonElement | null;
+
+    if (qualitySelect) {
+      qualitySelect.value = getQualityMode();
+      const onQualityChange = () => setQualityMode(qualitySelect.value);
+      qualitySelect.addEventListener('change', onQualityChange);
+      this.cleanupUi.push(() =>
+        qualitySelect.removeEventListener('change', onQualityChange),
+      );
+    }
+
+    const environment = getEnvironment();
+    if (timeSelect) timeSelect.value = environment.timeOfDay;
+    if (weatherSelect) weatherSelect.value = environment.weather;
+    const onEnvironmentChange = () =>
+      setEnvironment({
+        timeOfDay: timeSelect?.value || 'day',
+        weather: weatherSelect?.value || 'clear',
+      });
+    timeSelect?.addEventListener('change', onEnvironmentChange);
+    weatherSelect?.addEventListener('change', onEnvironmentChange);
+    this.cleanupUi.push(() => {
+      timeSelect?.removeEventListener('change', onEnvironmentChange);
+      weatherSelect?.removeEventListener('change', onEnvironmentChange);
+    });
+
+    if (fullscreenButton) {
+      const paintFullscreen = () => {
+        fullscreenButton.textContent = document.fullscreenElement
+          ? 'Exit fullscreen'
+          : 'Enter fullscreen';
+      };
+      const onFullscreenClick = () => void toggleFullscreen();
+      fullscreenButton.addEventListener('click', onFullscreenClick);
+      document.addEventListener('fullscreenchange', paintFullscreen);
+      this.cleanupUi.push(() => {
+        fullscreenButton.removeEventListener('click', onFullscreenClick);
+        document.removeEventListener('fullscreenchange', paintFullscreen);
+      });
+    }
+
+    if (shareButton) {
+      const onShareClick = async () => {
+        const seat = getCurrentSeat();
+        const activeId = getActiveStadiumId();
+        if (!seat || !activeId) return;
+        const url = new URL(
+          `/stadium/${stadiumRouteSlug(activeId)}`,
+          window.location.origin,
+        );
+        url.searchParams.set('section', String(seat.section));
+        url.searchParams.set('row', String(seat.row));
+        url.searchParams.set('seat', String(seat.seat));
+        url.searchParams.set('view', '1');
+        await navigator.clipboard.writeText(url.toString());
+        shareButton.textContent = 'Link copied';
+        window.setTimeout(() => (shareButton.textContent = 'Copy seat link'), 1600);
+      };
+      shareButton.addEventListener('click', onShareClick);
+      this.cleanupUi.push(() =>
+        shareButton.removeEventListener('click', onShareClick),
+      );
+    }
+
     const paintTarget = (currentId: string) => {
       const next = getStadiumMeta(otherStadiumId(currentId));
       if (!next) return;
@@ -90,22 +175,46 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
       this.cleanupUi.push(() => btn.removeEventListener('click', onClick));
     }
 
-    this.sub = this.route.paramMap.subscribe((params) => {
+    this.sub = combineLatest([
+      this.route.paramMap,
+      this.route.queryParamMap,
+    ]).subscribe(([params, query]) => {
       const id = resolveStadiumIdFromRoute(params.get('id'));
+      const section = Number(query.get('section'));
+      const row = Number(query.get('row'));
+      const seat = Number(query.get('seat'));
+      const seatLink =
+        section > 0 && row > 0 && seat > 0
+          ? {
+              section,
+              row,
+              seat,
+              fly: query.get('view') === '1',
+            }
+          : null;
       paintTarget(id);
-      void this.loadStadium(id, btn);
+      void this.loadStadium(id, btn, seatLink);
     });
   }
 
   private async loadStadium(
     id: string,
     btn: HTMLButtonElement | null,
+    seatLink: {
+      section: number;
+      row: number;
+      seat: number;
+      fly: boolean;
+    } | null,
   ): Promise<void> {
     const seq = ++this.loadSeq;
     if (btn) btn.disabled = true;
     try {
       await initStadium(id);
       if (seq !== this.loadSeq) return;
+      if (seatLink) {
+        openSeat(seatLink, { fly: seatLink.fly });
+      }
       const active = getActiveStadiumId();
       const routeSlug = this.route.snapshot.paramMap.get('id');
       const routeId = resolveStadiumIdFromRoute(routeSlug);
@@ -117,6 +226,7 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
       ) {
         await this.router.navigate(['/stadium', canonicalSlug], {
           replaceUrl: true,
+          queryParamsHandling: 'preserve',
         });
       }
     } catch (err) {

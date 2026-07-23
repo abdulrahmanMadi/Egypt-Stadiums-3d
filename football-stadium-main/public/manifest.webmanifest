@@ -1,0 +1,25 @@
+{
+  "name": "Egypt Stadiums 3D",
+  "short_name": "Stadiums 3D",
+  "description": "Explore Egyptian football stadiums and preview the match from any seat.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#061525",
+  "theme_color": "#061525",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

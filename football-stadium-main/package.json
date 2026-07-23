@@ -18,7 +18,7 @@
     "type": "git",
     "url": "git+https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d.git"
   },
-  "homepage": "https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d#readme",
+  "homepage": "https://egypt-stadiums-3d.vercel.app/",
   "bugs": {
     "url": "https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d/issues"
   },
@@ -50,6 +50,7 @@
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
+    "@angular/service-worker": "^22.0.8",
     "gsap": "^3.12.5",
     "rxjs": "~7.8.0",
     "three": "^0.128.0",

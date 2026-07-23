@@ -15,6 +15,8 @@ other modifications in this repository are maintained by
 [![Three.js](https://img.shields.io/badge/Three.js-r128-000?logo=threedotjs)](https://threejs.org/)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue)](LICENSE)
 
+## [Open the live experience](https://egypt-stadiums-3d.vercel.app/)
+
 ## Screenshots
 
 ### Cairo International Stadium
