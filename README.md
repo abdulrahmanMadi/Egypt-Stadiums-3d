@@ -1,4 +1,4 @@
-# StadiView — Football Stadium Experience
+# Egypt Stadiums 3D
 
 This repository contains an Angular and Three.js interactive 3D football
 stadium experience maintained by
@@ -11,8 +11,8 @@ features, screenshots, controls, setup instructions, attribution, and licensing.
 ## Quick start
 
 ```bash
-git clone https://github.com/abdulrahmanMadi/football-stadium-main.git
-cd football-stadium-main/football-stadium-main
+git clone https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d.git
+cd Egypt-Stadiums-3d/football-stadium-main
 npm install
 npm start
 ```

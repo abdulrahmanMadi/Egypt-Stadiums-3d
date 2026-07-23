@@ -1,5 +1,5 @@
 {
-  "name": "football-stadium",
+  "name": "egypt-stadiums-3d",
   "version": "1.0.0",
   "private": true,
   "description": "Procedural 3D football stadium seat preview experience (Angular 22).",
@@ -16,11 +16,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/abdulrahmanMadi/football-stadium-main.git"
+    "url": "git+https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d.git"
   },
-  "homepage": "https://github.com/abdulrahmanMadi/football-stadium-main#readme",
+  "homepage": "https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d#readme",
   "bugs": {
-    "url": "https://github.com/abdulrahmanMadi/football-stadium-main/issues"
+    "url": "https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d/issues"
   },
   "keywords": [
     "angular",
@@ -31,7 +31,7 @@
     "seat-view"
   ],
   "engines": {
-    "node": ">=20.19.0",
+    "node": ">=22.22.3",
     "npm": ">=11.0.0"
   },
   "scripts": {

@@ -1,4 +1,4 @@
-# StadiView
+# Egypt Stadiums 3D
 
 An interactive, procedural 3D football-stadium experience built with Angular,
 Three.js, and GSAP. Explore Misr Stadium and Cairo International Stadium,
@@ -39,12 +39,12 @@ other modifications in this repository are maintained by
 
 Requirements:
 
-- Node.js 20.19 or newer
+- Node.js 22.22.3 or newer
 - npm 11 or newer
 
 ```bash
-git clone https://github.com/abdulrahmanMadi/football-stadium-main.git
-cd football-stadium-main
+git clone https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d.git
+cd Egypt-Stadiums-3d/football-stadium-main
 npm install
 npm start
 ```
