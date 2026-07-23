@@ -20,6 +20,7 @@
 /** @type {Record<string, () => Promise<{ stadiumMeta: StadiumMeta, createStadium: Function }>>} */
 export const STADIUM_LOADERS = {
   misr: () => import('./stadiums/misr.engine.js'),
+  cairo: () => import('./stadiums/cairo.engine.js'),
   custom: () => import('./stadiums/custom.engine.js'),
 };
 
@@ -31,6 +32,18 @@ export const STADIUM_CATALOG = [
     shortName: 'Misr',
     location: 'New Administrative Capital',
     subtitle: 'Stadium View',
+  },
+  {
+    id: 'cairo',
+    name: 'Cairo International Stadium',
+    shortName: 'Cairo',
+    location: 'Nasr City, Cairo',
+    subtitle: 'Stadium View',
+    seats: false,
+    teams: { home: 'AL AHLY', away: 'ZAMALEK' },
+    flagHome: 'ahly',
+    flagAway: 'zam',
+    matchLabel: 'Cairo Derby · Day',
   },
   {
     id: 'custom',

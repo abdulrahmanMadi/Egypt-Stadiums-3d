@@ -4377,6 +4377,7 @@ export function createStadium(opts = {}) {
 
       return {
         id: metaInfo.id,
+        canvas,
         dispose() {
           if (disposed) return;
           disposed = true;
@@ -4412,11 +4413,8 @@ export function createStadium(opts = {}) {
           } catch (_) {}
           try {
             renderer.dispose();
-            renderer.forceContextLoss?.();
           } catch (_) {}
           canvas.classList.remove("dragging", "seatmode");
-          const loader = document.getElementById("loader");
-          if (loader) loader.classList.remove("hide");
         },
       };
 }

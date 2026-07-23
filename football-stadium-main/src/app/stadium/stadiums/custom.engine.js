@@ -224,6 +224,7 @@ export function createStadium(opts = {}) {
 
   return {
     id: metaInfo.id,
+    canvas,
     dispose() {
       if (disposed) return;
       disposed = true;
@@ -246,8 +247,6 @@ export function createStadium(opts = {}) {
         }
       });
       renderer.dispose();
-      renderer.forceContextLoss?.();
-      if (loader) loader.classList.remove('hide');
     },
   };
 }
