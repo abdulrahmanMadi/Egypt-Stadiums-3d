@@ -138,8 +138,9 @@ export function createStadium(opts = {}) {
   );
 
   /* ---------- dusk-blue lights ---------- */
-  scene.add(new THREE.HemisphereLight(0x6a90c8, 0x2a3038, 0.58));
-  scene.add(new THREE.AmbientLight(0x4a6080, 0.34));
+  const hemi = new THREE.HemisphereLight(0x6a90c8, 0x2a3038, 0.58);
+  const ambient = new THREE.AmbientLight(0x4a6080, 0.34);
+  scene.add(hemi, ambient);
   const sun = new THREE.DirectionalLight(0xc8d8f0, 0.72);
   sun.position.set(140, 90, 70);
   scene.add(sun);
@@ -176,6 +177,30 @@ export function createStadium(opts = {}) {
     dome.position.y = -40;
     scene.add(dome);
   }
+
+  const rainPositions = new Float32Array(1800 * 3);
+  for (let i = 0; i < 1800; i++) {
+    rainPositions[i * 3] = (rng() - 0.5) * 260;
+    rainPositions[i * 3 + 1] = rng() * 120 + 5;
+    rainPositions[i * 3 + 2] = (rng() - 0.5) * 220;
+  }
+  const rainGeometry = new THREE.BufferGeometry();
+  rainGeometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(rainPositions, 3),
+  );
+  const rain = new THREE.Points(
+    rainGeometry,
+    new THREE.PointsMaterial({
+      color: 0xb9dcff,
+      size: 0.18,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false,
+    }),
+  );
+  rain.visible = false;
+  scene.add(rain);
 
   const concrete = new THREE.MeshLambertMaterial({ color: 0xc5cbd4 });
   const concreteDark = new THREE.MeshLambertMaterial({ color: 0xa8b0bc });
@@ -3261,11 +3286,8 @@ export function createStadium(opts = {}) {
       }
       hideTip();
     } else if (mode === 'seat') {
-      seatView.yawOff = THREE.MathUtils.clamp(
-        seatView.yawOff - dx * 0.0032,
-        -1.5,
-        1.5,
-      );
+      // Unrestricted horizontal look for a complete 360° spectator view.
+      seatView.yawOff -= dx * 0.0032;
       seatView.pitchOff = THREE.MathUtils.clamp(
         seatView.pitchOff + dy * 0.0024,
         -0.55,
@@ -3321,7 +3343,40 @@ export function createStadium(opts = {}) {
     { passive: false },
   );
   on(window, 'keydown', (e) => {
-    if (e.key === 'Escape' && mode === 'seat') exitSeatMode();
+    let handled = false;
+    if (e.key === 'Escape' && mode === 'seat') {
+      exitSeatMode();
+      handled = true;
+    }
+    if (e.key === 'Enter' && mode === 'orbit' && selectedIdx >= 0) {
+      flyToSeat(selectedIdx);
+      handled = true;
+    }
+    if (mode === 'orbit' && (e.key === '[' || e.key === ']') && seatSys) {
+      const direction = e.key === ']' ? 1 : -1;
+      const next =
+        (Math.max(0, selectedIdx) + direction + seatSys.SEAT_COUNT) %
+        seatSys.SEAT_COUNT;
+      currentInfo = seatInfo(next);
+      applySelection(next);
+      updatePanel(currentInfo, 'ready');
+      handled = true;
+    }
+    if (mode === 'orbit' && !handled) {
+      if (e.key === 'ArrowLeft') orbit.thetaT += 0.12;
+      else if (e.key === 'ArrowRight') orbit.thetaT -= 0.12;
+      else if (e.key === 'ArrowUp')
+        orbit.phiT = Math.max(0.14, orbit.phiT - 0.08);
+      else if (e.key === 'ArrowDown')
+        orbit.phiT = Math.min(1.46, orbit.phiT + 0.08);
+      else if (e.key === '+' || e.key === '=')
+        orbit.radiusT = Math.max(60, orbit.radiusT - 16);
+      else if (e.key === '-') orbit.radiusT = Math.min(420, orbit.radiusT + 16);
+      else return;
+      userInteracted = true;
+      handled = true;
+    }
+    if (handled) e.preventDefault();
   });
 
   const goHome = () => {
@@ -3681,6 +3736,94 @@ export function createStadium(opts = {}) {
     }
   }
 
+  const qualityPresets = {
+    low: { dpr: 0.75, crowd: 0.4, ui: 220, shadows: false, rain: 500 },
+    medium: { dpr: 1, crowd: 0.65, ui: 150, shadows: false, rain: 900 },
+    high: { dpr: 1.25, crowd: 0.85, ui: 100, shadows: false, rain: 1400 },
+    ultra: { dpr: 1.5, crowd: 1, ui: 80, shadows: true, rain: 1800 },
+  };
+  let requestedCrowdRatio = 0.8;
+  let qualityMode = 'auto';
+  let qualityScale = 1;
+  let uiDrawInterval = 100;
+  let fpsTime = 0;
+  let fpsFrames = 0;
+  let lastFpsCheck = 0;
+
+  function applyCrowdDensity() {
+    const effectiveRatio =
+      requestedCrowdRatio >= 0.999
+        ? 1
+        : requestedCrowdRatio * qualityScale;
+    crowdMeshes.forEach((mesh) => {
+      mesh.count = Math.round(
+        mesh.instanceMatrix.count * effectiveRatio,
+      );
+    });
+  }
+
+  function applyQuality(mode) {
+    qualityMode = mode;
+    if (mode === 'auto') {
+      qualityScale = 1;
+      uiDrawInterval = 100;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+      renderer.shadowMap.enabled = false;
+      sun.castShadow = false;
+      rainGeometry.setDrawRange(0, 1200);
+    } else {
+      const preset = qualityPresets[mode] || qualityPresets.high;
+      qualityScale = preset.crowd;
+      uiDrawInterval = preset.ui;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.dpr));
+      renderer.shadowMap.enabled = preset.shadows;
+      sun.castShadow = preset.shadows;
+      rainGeometry.setDrawRange(0, preset.rain);
+    }
+    renderer.setSize(innerWidth, innerHeight);
+    applyCrowdDensity();
+  }
+
+  function adaptQuality(dt, now) {
+    if (qualityMode !== 'auto') return;
+    fpsTime += dt;
+    fpsFrames++;
+    if (now - lastFpsCheck < 2500) return;
+    const fps = fpsFrames / Math.max(0.001, fpsTime);
+    fpsTime = 0;
+    fpsFrames = 0;
+    lastFpsCheck = now;
+    const pr = renderer.getPixelRatio();
+    if (fps < 38) {
+      qualityScale = Math.max(0.4, qualityScale - 0.12);
+      renderer.setPixelRatio(Math.max(0.7, pr - 0.2));
+      renderer.shadowMap.enabled = false;
+      sun.castShadow = false;
+    } else if (fps > 55) {
+      qualityScale = Math.min(1, qualityScale + 0.08);
+      renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio, pr + 0.1));
+      const allowShadows = fps > 58 && qualityScale > 0.9;
+      renderer.shadowMap.enabled = allowShadows;
+      sun.castShadow = allowShadows;
+    }
+    applyCrowdDensity();
+  }
+
+  function applyEnvironment(next) {
+    const night = next.timeOfDay === 'night';
+    const weather = next.weather || 'clear';
+    scene.background.set(night ? 0x020815 : weather === 'fog' ? 0x77899a : 0x376b9b);
+    scene.fog.color.set(night ? 0x07111f : weather === 'fog' ? 0x81909b : 0x4d7594);
+    scene.fog.near = weather === 'fog' ? 90 : 420;
+    scene.fog.far = weather === 'fog' ? 520 : 1050;
+    hemi.intensity = night ? 0.28 : 0.72;
+    ambient.intensity = night ? 0.22 : 0.42;
+    sun.intensity = night ? 0.08 : weather === 'fog' ? 0.35 : 0.9;
+    fill.intensity = night ? 0.18 : 0.32;
+    fieldGlow.intensity = night ? 0.65 : 0.22;
+    rain.visible = weather === 'rain';
+  }
+
   const clock = new THREE.Clock();
   let firstFrame = true;
   let lastUiDraw = 0;
@@ -3694,6 +3837,14 @@ export function createStadium(opts = {}) {
     exciteU.value += (1 - exciteU.value) * Math.min(1, dt * 0.55);
     for (const a of animatedTextures) a.t.offset.x += a.speed * dt * 10;
     matchPlay.update(t, dt);
+    if (rain.visible) {
+      const positions = rainGeometry.attributes.position.array;
+      for (let i = 1; i < positions.length; i += 3) {
+        positions[i] -= dt * 42;
+        if (positions[i] < 0) positions[i] = 120;
+      }
+      rainGeometry.attributes.position.needsUpdate = true;
+    }
 
     if (mode === 'orbit') {
       if (!userInteracted && !REDUCED) orbit.thetaT += dt * 0.016;
@@ -3724,11 +3875,12 @@ export function createStadium(opts = {}) {
       camera.lookAt(look);
     }
 
-    if (now - lastUiDraw >= 100) {
+    if (now - lastUiDraw >= uiDrawInterval) {
       lastUiDraw = now;
       drawMiniMap();
       drawOverview();
     }
+    adaptQuality(dt, now);
     renderer.render(scene, camera);
     if (firstFrame) {
       firstFrame = false;
@@ -3745,10 +3897,48 @@ export function createStadium(opts = {}) {
     id: metaInfo.id,
     canvas,
     setCrowdCapacity(percent) {
-      const ratio = THREE.MathUtils.clamp(Number(percent) / 100, 0, 1);
-      crowdMeshes.forEach((mesh) => {
-        mesh.count = Math.round(mesh.instanceMatrix.count * ratio);
-      });
+      requestedCrowdRatio = THREE.MathUtils.clamp(
+        Number(percent) / 100,
+        0,
+        1,
+      );
+      applyCrowdDensity();
+    },
+    setQualityMode(mode) {
+      applyQuality(mode);
+    },
+    setEnvironment(next) {
+      applyEnvironment(next);
+    },
+    openSeat(key, options = {}) {
+      if (!seatSys) return false;
+      const section = Number(key.section);
+      const row = Number(key.row);
+      const seat = Number(key.seat);
+      const m = seatSys.meta;
+      for (let i = 0; i < seatSys.SEAT_COUNT; i++) {
+        if (
+          m.label[i] === section &&
+          m.row[i] === row &&
+          m.seatNum[i] === seat
+        ) {
+          currentInfo = seatInfo(i);
+          applySelection(i);
+          updatePanel(currentInfo, options.fly ? 'previewing' : 'ready');
+          if (options.fly) flyToSeat(i);
+          return true;
+        }
+      }
+      return false;
+    },
+    getCurrentSeat() {
+      return currentInfo
+        ? {
+            section: currentInfo.label,
+            row: currentInfo.row,
+            seat: currentInfo.seat,
+          }
+        : null;
     },
     dispose() {
       if (disposed) return;

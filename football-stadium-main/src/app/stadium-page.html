@@ -14,12 +14,13 @@
 
     <canvas
       id="c"
+      tabindex="0"
       aria-label="Interactive 3D stadium. Click any seat to preview its view."
     ></canvas>
     <div id="vig" aria-hidden="true"></div>
 
     <nav>
-      <div class="brand">
+      <a class="brand" href="/" aria-label="All stadiums">
         <svg viewBox="0 0 24 24" fill="none">
           <path d="M12 2 21 7l-9 5-9-5 9-5Z" fill="#19b7ff" />
           <path d="M3 12l9 5 9-5" stroke="#66d4ff" stroke-width="1.6" />
@@ -34,7 +35,7 @@
           <span class="brand-name">Misr Stadium</span>
           <span class="brand-sub">Stadium View</span>
         </div>
-      </div>
+      </a>
       <div class="nav-chip">Explore · Preview seats · Orbit freely</div>
       <button
         type="button"
@@ -137,6 +138,36 @@
           aria-label="Crowd capacity percentage"
         />
       </div>
+      <div class="experience-controls">
+        <label>
+          Quality
+          <select id="quality-mode" aria-label="Graphics quality">
+            <option value="auto">Auto</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+            <option value="ultra">Ultra</option>
+          </select>
+        </label>
+        <div class="control-row">
+          <label>
+            Time
+            <select id="time-of-day" aria-label="Time of day">
+              <option value="day">Day</option>
+              <option value="night">Night</option>
+            </select>
+          </label>
+          <label>
+            Weather
+            <select id="weather-mode" aria-label="Weather">
+              <option value="clear">Clear</option>
+              <option value="fog">Fog</option>
+              <option value="rain">Rain</option>
+            </select>
+          </label>
+        </div>
+        <button type="button" id="fullscreen-toggle">Enter fullscreen</button>
+      </div>
       <footer>
         <svg
           viewBox="0 0 24 24"
@@ -204,7 +235,7 @@
           <div class="ph" id="p-ph">Rendering seat view…</div>
           <div class="pill br">360°</div>
         </div>
-        <button id="checkout" type="button">
+        <button id="checkout" type="button" aria-label="View from selected seat">
           <span id="checkout-label">View from seat</span>
           <svg
             viewBox="0 0 24 24"
@@ -215,13 +246,16 @@
             <path d="M4 12h15M13 6l6 6-6 6" />
           </svg>
         </button>
+        <button id="share-seat" type="button" aria-label="Copy shareable seat link">
+          Copy seat link
+        </button>
         <div class="secure">Explore only · no ticket booking</div>
       </section>
     </div>
 
     <div id="sb-hint">Drag to look around · scroll to zoom</div>
     <div id="backbar" role="toolbar" aria-label="Seat view controls">
-      <button id="bk-exit">
+      <button id="bk-exit" aria-label="Back to stadium view">
         <svg
           viewBox="0 0 24 24"
           fill="none"

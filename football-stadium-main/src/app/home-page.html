@@ -1,0 +1,41 @@
+<main class="home">
+  <header class="hero">
+    <a
+      class="github"
+      href="https://github.com/abdulrahmanMadi/Egypt-Stadiums-3d"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      GitHub · &#64;abdulrahmanMadi
+    </a>
+    <p class="eyebrow">Interactive Egyptian venues</p>
+    <h1>Egypt Stadiums <span>3D</span></h1>
+    <p class="intro">
+      Choose a stadium, orbit around its architecture, select a seat, and
+      experience the match from the crowd.
+    </p>
+  </header>
+
+  <section class="stadium-grid" aria-label="Available stadiums">
+    @for (stadium of stadiums; track stadium.id) {
+      <a class="stadium-card" [routerLink]="stadium.route">
+        <img
+          [src]="stadium.previewImage"
+          [alt]="stadium.name + ' overview'"
+          loading="eager"
+        />
+        <span class="card-shade"></span>
+        <span class="card-copy">
+          <span class="location">{{ stadium.location }}</span>
+          <strong>{{ stadium.name }}</strong>
+          <span>{{ stadium.description }}</span>
+          <span class="enter">Enter stadium <b aria-hidden="true">→</b></span>
+        </span>
+      </a>
+    }
+  </section>
+
+  <footer>
+    Built with Angular, Three.js, and GSAP · Noncommercial use only
+  </footer>
+</main>

@@ -20,11 +20,26 @@ let active = null;
 /** @type {Promise<any> | null} */
 let switching = null;
 let crowdCapacityPercent = 80;
+let qualityMode = 'auto';
+let environment = { timeOfDay: 'day', weather: 'clear' };
 
 try {
   const storedCapacity = Number(localStorage.getItem('crowdCapacityPercentV2'));
   if (Number.isFinite(storedCapacity)) {
     crowdCapacityPercent = Math.max(0, Math.min(100, storedCapacity));
+  }
+} catch (_) {}
+
+try {
+  const storedQuality = localStorage.getItem('qualityModeV1');
+  if (['auto', 'low', 'medium', 'high', 'ultra'].includes(storedQuality)) {
+    qualityMode = storedQuality;
+  }
+  const storedEnvironment = JSON.parse(
+    localStorage.getItem('environmentV1') || 'null',
+  );
+  if (storedEnvironment) {
+    environment = { ...environment, ...storedEnvironment };
   }
 } catch (_) {}
 
@@ -39,6 +54,47 @@ export function setCrowdCapacity(percent) {
     localStorage.setItem('crowdCapacityPercentV2', String(value));
   } catch (_) {}
   active?.setCrowdCapacity?.(value);
+}
+
+export function getQualityMode() {
+  return qualityMode;
+}
+
+export function setQualityMode(mode) {
+  if (!['auto', 'low', 'medium', 'high', 'ultra'].includes(mode)) return;
+  qualityMode = mode;
+  try {
+    localStorage.setItem('qualityModeV1', mode);
+  } catch (_) {}
+  active?.setQualityMode?.(mode);
+}
+
+export function getEnvironment() {
+  return { ...environment };
+}
+
+export function setEnvironment(next) {
+  environment = { ...environment, ...next };
+  try {
+    localStorage.setItem('environmentV1', JSON.stringify(environment));
+  } catch (_) {}
+  active?.setEnvironment?.(environment);
+}
+
+export async function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+  } else {
+    await document.documentElement.requestFullscreen();
+  }
+}
+
+export function openSeat(seat, options) {
+  return active?.openSeat?.(seat, options) || false;
+}
+
+export function getCurrentSeat() {
+  return active?.getCurrentSeat?.() || null;
 }
 
 function applyBranding(meta) {
@@ -196,6 +252,8 @@ export async function initStadium(stadiumId = DEFAULT_STADIUM_ID) {
       if (!handle.canvas) handle.canvas = getLiveCanvas();
       active = handle;
       handle.setCrowdCapacity?.(crowdCapacityPercent);
+      handle.setQualityMode?.(qualityMode);
+      handle.setEnvironment?.(environment);
       try {
         localStorage.setItem('stadiumId', id);
       } catch (_) {}

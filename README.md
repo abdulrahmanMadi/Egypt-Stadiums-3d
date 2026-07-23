@@ -8,6 +8,8 @@ air, around the bowl, and directly from the supporters' seats.
 [![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-2563EB)](LICENSE)
 
+## [Open the live experience](https://egypt-stadiums-3d.vercel.app/)
+
 Built with Angular, Three.js, and GSAP. The experience includes two procedural
 stadiums, selectable seats, first-person previews, animated crowds, stadium
 audio, and a continuous passing match.
@@ -64,6 +66,9 @@ Maintained by [Abdulrahman Madi](https://github.com/abdulrahmanMadi).
 - Mouse-wheel and touch zoom controls.
 - Reset, zoom-in, and zoom-out camera controls.
 - Live camera minimap and stadium overview.
+- Arrow-key orbiting, `+`/`-` zoom, `[`/`]` seat selection, `Enter` to open a
+  seat, and `Escape` to return.
+- Fullscreen mode for a more immersive view.
 - Responsive interface for desktop and mobile layouts.
 
 ### Seat selection and first-person preview
@@ -101,15 +106,20 @@ Maintained by [Abdulrahman Madi](https://github.com/abdulrahmanMadi).
 - Switching stadiums disposes the previous WebGL scene, audio, timers, and GPU
   resources before starting the next venue.
 - Adaptive rendering quality and capped device pixel ratios.
+- Automatic FPS-based quality control plus Low, Medium, High, and Ultra presets.
+- Day/night lighting with clear, fog, and rain weather modes.
 - Throttled minimap and overview rendering.
 - Lazy audio initialization after user interaction.
+- Installable PWA with offline application-shell caching.
+- Shareable URLs for individual sections, rows, and seats.
 - No backend, account, API key, or environment secret is required.
 
 ## Routes
 
-- `/` — opens Cairo International Stadium.
+- `/` — stadium selection landing page.
 - `/stadium/cairo` — Cairo International Stadium.
 - `/stadium/NewAdministrativeCapital` — New Administrative Capital Stadium.
+- Seat links use `?section=125&row=12&seat=18&view=1`.
 - The stadium switcher in the top navigation moves between both venues.
 
 ## Technology

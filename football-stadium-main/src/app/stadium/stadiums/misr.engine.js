@@ -74,8 +74,9 @@ export function createStadium(opts = {}) {
       );
 
       /* ---------- lights ---------- */
-      scene.add(new THREE.HemisphereLight(0x35507e, 0x05070d, 0.55));
-      scene.add(new THREE.AmbientLight(0x27314a, 0.35));
+      const hemi = new THREE.HemisphereLight(0x35507e, 0x05070d, 0.55);
+      const ambient = new THREE.AmbientLight(0x27314a, 0.35);
+      scene.add(hemi, ambient);
       const floodTargets = new THREE.Object3D();
       floodTargets.position.set(0, 0, 0);
       scene.add(floodTargets);
@@ -112,6 +113,30 @@ export function createStadium(opts = {}) {
       sun.shadow.camera.far = 320;
       sun.shadow.bias = -0.0005;
       scene.add(sun);
+
+      const rainPositions = new Float32Array(1800 * 3);
+      for (let i = 0; i < 1800; i++) {
+        rainPositions[i * 3] = (rng() - 0.5) * 260;
+        rainPositions[i * 3 + 1] = rng() * 120 + 5;
+        rainPositions[i * 3 + 2] = (rng() - 0.5) * 220;
+      }
+      const rainGeometry = new THREE.BufferGeometry();
+      rainGeometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(rainPositions, 3),
+      );
+      const rain = new THREE.Points(
+        rainGeometry,
+        new THREE.PointsMaterial({
+          color: 0xb9dcff,
+          size: 0.18,
+          transparent: true,
+          opacity: 0.55,
+          depthWrite: false,
+        }),
+      );
+      rain.visible = false;
+      scene.add(rain);
 
       /* ---------- geometry helpers ---------- */
       function ringStrip(rx1, rz1, y1, rx2, rz2, y2, seg, mat, repU) {
@@ -3858,11 +3883,8 @@ export function createStadium(opts = {}) {
           }
           hideTip();
         } else if (mode === "seat") {
-          seatView.yawOff = THREE.MathUtils.clamp(
-            seatView.yawOff - dx * 0.0032,
-            -1.5,
-            1.5,
-          );
+          // Unrestricted horizontal look for a complete 360° spectator view.
+          seatView.yawOff -= dx * 0.0032;
           seatView.pitchOff = THREE.MathUtils.clamp(
             seatView.pitchOff + dy * 0.0024,
             -0.55,
@@ -3944,22 +3966,40 @@ export function createStadium(opts = {}) {
 
       /* ---------- keyboard ---------- */
       on(window, "keydown", (e) => {
-        if (e.key === "Escape" && mode === "seat") exitSeatMode();
+        let handled = false;
+        if (e.key === "Escape" && mode === "seat") {
+          exitSeatMode();
+          handled = true;
+        }
         if (e.key === "Enter" && mode === "orbit" && selectedIdx >= 0) {
           flyToSeat(selectedIdx);
+          handled = true;
         }
-        if (mode === "orbit") {
+        if (mode === "orbit" && (e.key === "[" || e.key === "]")) {
+          const direction = e.key === "]" ? 1 : -1;
+          const next =
+            (Math.max(0, selectedIdx) + direction + SEAT_COUNT) % SEAT_COUNT;
+          currentInfo = seatInfo(next);
+          applySelection(next);
+          updatePanel(currentInfo, "ready");
+          handled = true;
+        }
+        if (mode === "orbit" && !handled) {
           userInteracted = true;
           if (e.key === "ArrowLeft") orbit.thetaT += 0.12;
-          if (e.key === "ArrowRight") orbit.thetaT -= 0.12;
-          if (e.key === "ArrowUp")
+          else if (e.key === "ArrowRight") orbit.thetaT -= 0.12;
+          else if (e.key === "ArrowUp")
             orbit.phiT = Math.max(0.14, orbit.phiT - 0.08);
-          if (e.key === "ArrowDown")
+          else if (e.key === "ArrowDown")
             orbit.phiT = Math.min(1.46, orbit.phiT + 0.08);
-          if (e.key === "+" || e.key === "=")
+          else if (e.key === "+" || e.key === "=")
             orbit.radiusT = Math.max(60, orbit.radiusT - 16);
-          if (e.key === "-") orbit.radiusT = Math.min(420, orbit.radiusT + 16);
+          else if (e.key === "-")
+            orbit.radiusT = Math.min(420, orbit.radiusT + 16);
+          else return;
+          handled = true;
         }
+        if (handled) e.preventDefault();
       });
 
       /* ---------- buttons ---------- */
@@ -4422,10 +4462,56 @@ export function createStadium(opts = {}) {
         camera.updateProjectionMatrix();
         renderer.setSize(innerWidth, innerHeight);
       });
+      const qualityPresets = {
+        low: { dpr: 0.75, crowd: 0.4, ui: 220, shadows: false, rain: 500 },
+        medium: { dpr: 1, crowd: 0.65, ui: 150, shadows: false, rain: 900 },
+        high: { dpr: 1.25, crowd: 0.85, ui: 100, shadows: false, rain: 1400 },
+        ultra: { dpr: 1.5, crowd: 1, ui: 80, shadows: true, rain: 1800 },
+      };
+      let requestedCrowdRatio = 0.8;
+      let qualityMode = "auto";
+      let qualityScale = 1;
+      let uiDrawInterval = 100;
       let fpsAcc = 0,
         fpsN = 0,
         fpsCheck = 0;
+
+      function applyCrowdDensity() {
+        const effectiveRatio =
+          requestedCrowdRatio >= 0.999
+            ? 1
+            : requestedCrowdRatio * qualityScale;
+        crowdMeshes.forEach((mesh) => {
+          mesh.count = Math.round(
+            mesh.instanceMatrix.count * effectiveRatio,
+          );
+        });
+      }
+
+      function applyQuality(mode) {
+        qualityMode = mode;
+        if (mode === "auto") {
+          qualityScale = 1;
+          uiDrawInterval = 100;
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
+          renderer.shadowMap.enabled = false;
+          sun.castShadow = false;
+          rainGeometry.setDrawRange(0, 1200);
+        } else {
+          const preset = qualityPresets[mode] || qualityPresets.high;
+          qualityScale = preset.crowd;
+          uiDrawInterval = preset.ui;
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.dpr));
+          renderer.shadowMap.enabled = preset.shadows;
+          sun.castShadow = preset.shadows;
+          rainGeometry.setDrawRange(0, preset.rain);
+        }
+        renderer.setSize(innerWidth, innerHeight);
+        applyCrowdDensity();
+      }
+
       function adaptQuality(dt, now) {
+        if (qualityMode !== "auto") return;
         fpsAcc += dt;
         fpsN++;
         if (now - fpsCheck < 2500) return;
@@ -4434,12 +4520,38 @@ export function createStadium(opts = {}) {
         fpsAcc = 0;
         fpsN = 0;
         const pr = renderer.getPixelRatio();
-        if (fps < 40 && pr > 0.75)
-          renderer.setPixelRatio(Math.max(0.75, pr - 0.25));
-        else if (fps > 75 && pr < Math.min(1.5, window.devicePixelRatio))
+        if (fps < 38) {
+          qualityScale = Math.max(0.4, qualityScale - 0.12);
+          renderer.setPixelRatio(Math.max(0.7, pr - 0.2));
+          renderer.shadowMap.enabled = false;
+          sun.castShadow = false;
+        } else if (fps > 55) {
+          qualityScale = Math.min(1, qualityScale + 0.08);
           renderer.setPixelRatio(
-            Math.min(1.5, window.devicePixelRatio, pr + 0.25),
+            Math.min(1.5, window.devicePixelRatio, pr + 0.1),
           );
+          const allowShadows = fps > 58 && qualityScale > 0.9;
+          renderer.shadowMap.enabled = allowShadows;
+          sun.castShadow = allowShadows;
+        }
+        applyCrowdDensity();
+      }
+
+      function applyEnvironment(next) {
+        const night = next.timeOfDay === "night";
+        const weather = next.weather || "clear";
+        scene.background.set(
+          night ? 0x02050c : weather === "fog" ? 0x788694 : 0x39709c,
+        );
+        scene.fog.color.set(
+          night ? 0x05070d : weather === "fog" ? 0x7b8790 : 0x426b88,
+        );
+        scene.fog.density = weather === "fog" ? 0.0048 : night ? 0.0018 : 0.0012;
+        hemi.intensity = night ? 0.48 : 0.78;
+        ambient.intensity = night ? 0.3 : 0.5;
+        sun.intensity = night ? 0.2 : weather === "fog" ? 0.38 : 0.82;
+        fieldGlow.intensity = night ? 0.55 : 0.2;
+        rain.visible = weather === "rain";
       }
 
       /* ---------- main loop ---------- */
@@ -4455,6 +4567,14 @@ export function createStadium(opts = {}) {
         // scrolling LED textures
         for (const a of animatedTextures) a.t.offset.x += a.speed * dt * 10;
         updateMatch(t, dt);
+        if (rain.visible) {
+          const positions = rainGeometry.attributes.position.array;
+          for (let i = 1; i < positions.length; i += 3) {
+            positions[i] -= dt * 42;
+            if (positions[i] < 0) positions[i] = 120;
+          }
+          rainGeometry.attributes.position.needsUpdate = true;
+        }
         if (mode === "orbit") {
           if (!userInteracted && !REDUCED) orbit.thetaT += dt * 0.016;
           const k = REDUCED ? 1 : Math.min(1, dt * 5.5);
@@ -4492,7 +4612,7 @@ export function createStadium(opts = {}) {
           const gs = 2.3 + 0.35 * Math.sin(t * 2.6);
           selGlow.scale.set(gs, gs, 1);
         } else selGlow.material.opacity = 0;
-        if (now - lastUiDraw >= 100) {
+        if (now - lastUiDraw >= uiDrawInterval) {
           lastUiDraw = now;
           drawMiniMap();
           drawOverview();
@@ -4518,10 +4638,44 @@ export function createStadium(opts = {}) {
         id: metaInfo.id,
         canvas,
         setCrowdCapacity(percent) {
-          const ratio = THREE.MathUtils.clamp(Number(percent) / 100, 0, 1);
-          crowdMeshes.forEach((mesh) => {
-            mesh.count = Math.round(mesh.instanceMatrix.count * ratio);
-          });
+          requestedCrowdRatio = THREE.MathUtils.clamp(
+            Number(percent) / 100,
+            0,
+            1,
+          );
+          applyCrowdDensity();
+        },
+        setQualityMode(mode) {
+          applyQuality(mode);
+        },
+        setEnvironment(next) {
+          applyEnvironment(next);
+        },
+        openSeat(key, options = {}) {
+          const section = Number(key.section);
+          const row = Number(key.row);
+          const seat = Number(key.seat);
+          const sec = sections.find((item) => item.label === section);
+          if (!sec) return false;
+          for (let i = sec.start; i < sec.start + sec.count; i++) {
+            if (meta.row[i] === row && meta.seatNum[i] === seat) {
+              currentInfo = seatInfo(i);
+              applySelection(i);
+              updatePanel(currentInfo, options.fly ? "previewing" : "ready");
+              if (options.fly) flyToSeat(i);
+              return true;
+            }
+          }
+          return false;
+        },
+        getCurrentSeat() {
+          return currentInfo
+            ? {
+                section: currentInfo.label,
+                row: currentInfo.row,
+                seat: currentInfo.seat,
+              }
+            : null;
         },
         dispose() {
           if (disposed) return;
