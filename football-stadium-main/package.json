@@ -1,8 +1,39 @@
 {
   "name": "football-stadium",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Procedural 3D football stadium seat preview experience (Angular 22).",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "author": {
+    "name": "thebuggeddev",
+    "url": "https://github.com/thebuggeddev"
+  },
+  "maintainers": [
+    {
+      "name": "Abdulrahman Madi",
+      "url": "https://github.com/abdulrahmanMadi"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abdulrahmanMadi/football-stadium-main.git"
+  },
+  "homepage": "https://github.com/abdulrahmanMadi/football-stadium-main#readme",
+  "bugs": {
+    "url": "https://github.com/abdulrahmanMadi/football-stadium-main/issues"
+  },
+  "keywords": [
+    "angular",
+    "threejs",
+    "3d",
+    "football",
+    "stadium",
+    "seat-view"
+  ],
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=11.0.0"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
