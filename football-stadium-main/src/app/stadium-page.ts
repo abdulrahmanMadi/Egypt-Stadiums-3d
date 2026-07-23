@@ -11,8 +11,9 @@ import { Subscription } from 'rxjs';
 import {
   disposeActiveStadium,
   getActiveStadiumId,
+  getStadiumMeta,
   initStadium,
-  listStadiums,
+  otherStadiumId,
   resolveStadiumIdFromRoute,
 } from './stadium/stadium.engine.js';
 
@@ -28,46 +29,56 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   private sub: Subscription | null = null;
   private loadSeq = 0;
+  private cleanupUi: Array<() => void> = [];
 
   ngAfterViewInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const select = document.getElementById(
-      'stadium-select',
-    ) as HTMLSelectElement | null;
+    const btn = document.getElementById(
+      'stadium-switch-btn',
+    ) as HTMLButtonElement | null;
+    const kickerEl = document.getElementById('ss-kicker');
+    const nameEl = document.getElementById('ss-name');
+    const locEl = document.getElementById('ss-loc');
 
-    if (select) {
-      const current = resolveStadiumIdFromRoute(
-        this.route.snapshot.paramMap.get('id'),
-      );
-      // rebuild options once per mount
-      select.innerHTML = '';
-      for (const s of listStadiums()) {
-        const opt = document.createElement('option');
-        opt.value = s.id;
-        opt.textContent = s.draft ? `${s.name} (draft)` : s.name;
-        if (s.id === current) opt.selected = true;
-        select.appendChild(opt);
+    const paintTarget = (currentId: string) => {
+      const next = getStadiumMeta(otherStadiumId(currentId));
+      if (!next) return;
+      if (kickerEl) kickerEl.textContent = 'Go to';
+      if (nameEl) nameEl.textContent = next.name;
+      if (locEl) locEl.textContent = next.location || '';
+      if (btn) {
+        btn.setAttribute('aria-label', `Open ${next.name}`);
+        btn.dataset['target'] = next.id;
       }
-      select.addEventListener('change', () => {
-        void this.router.navigate(['/stadium', select.value]);
-      });
+    };
+
+    if (btn) {
+      const onClick = () => {
+        const target =
+          btn.dataset['target'] ||
+          otherStadiumId(
+            resolveStadiumIdFromRoute(this.route.snapshot.paramMap.get('id')),
+          );
+        void this.router.navigate(['/stadium', target]);
+      };
+      btn.addEventListener('click', onClick);
+      this.cleanupUi.push(() => btn.removeEventListener('click', onClick));
     }
 
     this.sub = this.route.paramMap.subscribe((params) => {
       const id = resolveStadiumIdFromRoute(params.get('id'));
-      if (select && select.value !== id) select.value = id;
-      void this.loadStadium(id, select);
+      paintTarget(id);
+      void this.loadStadium(id, btn);
     });
   }
 
   private async loadStadium(
     id: string,
-    select: HTMLSelectElement | null,
+    btn: HTMLButtonElement | null,
   ): Promise<void> {
-    // initStadium itself decides whether a rebuild is needed (canvas still live?)
     const seq = ++this.loadSeq;
-    if (select) select.disabled = true;
+    if (btn) btn.disabled = true;
     try {
       await initStadium(id);
       const active = getActiveStadiumId();
@@ -82,12 +93,18 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
     } catch (err) {
       console.error(err);
     } finally {
-      if (seq === this.loadSeq && select) select.disabled = false;
+      if (seq === this.loadSeq && btn) btn.disabled = false;
     }
   }
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+    this.cleanupUi.forEach((fn) => {
+      try {
+        fn();
+      } catch (_) {}
+    });
+    this.cleanupUi = [];
     disposeActiveStadium();
   }
 }

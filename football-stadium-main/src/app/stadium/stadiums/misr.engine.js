@@ -24,6 +24,7 @@ export function createStadium(opts = {}) {
   let disposed = false;
   let rafId = 0;
   const on = (target, type, fn, options) => {
+    if (!target) return;
     target.addEventListener(type, fn, options);
     disposers.push(() => target.removeEventListener(type, fn, options));
   };
@@ -3614,7 +3615,7 @@ export function createStadium(opts = {}) {
         seatView.pitchOff = 0;
         camera.fov = 55;
         camera.updateProjectionMatrix();
-        ui.dock.classList.add("hidden");
+        if (ui.dock) ui.dock.classList.add("hidden");
         ui.backbar.classList.add("show");
         ui.sbHint.classList.add("show");
         setTimeout(() => ui.sbHint.classList.remove("show"), 4200);
@@ -3629,7 +3630,7 @@ export function createStadium(opts = {}) {
         canvas.classList.remove("seatmode");
         ui.backbar.classList.remove("show");
         ui.sbHint.classList.remove("show");
-        ui.dock.classList.remove("hidden");
+        if (ui.dock) ui.dock.classList.remove("hidden");
         orbit.theta = orbit.thetaT = lastOrbit.theta;
         orbit.phi = orbit.phiT = lastOrbit.phi;
         orbit.radius = orbit.radiusT = lastOrbit.radius;
@@ -3734,7 +3735,7 @@ export function createStadium(opts = {}) {
           );
           if (is2D && Math.abs(dy) > 2) {
             is2D = false;
-            ui.d3d.textContent = "3D";
+            if (ui.d3d) ui.d3d.textContent = "3D";
           }
           hideTip();
         } else if (mode === "seat") {
@@ -3874,7 +3875,7 @@ export function createStadium(opts = {}) {
           ease: "power2.inOut",
         });
         is2D = false;
-        ui.d3d.textContent = "3D";
+        if (ui.d3d) ui.d3d.textContent = "3D";
       }
       on($("cc-reset"), "click", goHome);
       on($("d-reset"), "click", goHome);
@@ -3899,7 +3900,7 @@ export function createStadium(opts = {}) {
         toast("VR mode needs a WebXR headset. It is not in this build"),
       );
       on(ui.d3d, "click", () => {
-        if (mode !== "orbit") return;
+        if (mode !== "orbit" || !ui.d3d) return;
         userInteracted = true;
         is2D = !is2D;
         ui.d3d.textContent = is2D ? "2D" : "3D";

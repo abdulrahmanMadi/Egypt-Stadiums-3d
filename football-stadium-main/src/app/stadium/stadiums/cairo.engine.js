@@ -722,57 +722,68 @@ export function createStadium(opts = {}) {
         emissive: 0x145a28,
         emissiveIntensity: 0.32,
         emissiveMap: tex,
+        polygonOffset: true,
+        polygonOffsetFactor: -2,
+        polygonOffsetUnits: -2,
       }),
     );
     pitch.rotation.x = -Math.PI / 2;
-    pitch.position.y = 0.06;
+    pitch.position.y = 0.08;
     pitch.receiveShadow = true;
+    pitch.renderOrder = 2;
     scene.add(pitch);
 
     // dark blue-grey pitch border (reference frame around grass)
     const pitchBorder = new THREE.Mesh(
       new THREE.PlaneGeometry(FIELD.L + 1.1, FIELD.W + 1.1),
-      new THREE.MeshLambertMaterial({ color: 0x2a3544 }),
+      new THREE.MeshLambertMaterial({
+        color: 0x2a3544,
+        polygonOffset: true,
+        polygonOffsetFactor: -1,
+        polygonOffsetUnits: -1,
+      }),
     );
     pitchBorder.rotation.x = -Math.PI / 2;
-    pitchBorder.position.y = 0.04;
+    pitchBorder.position.y = 0.05;
+    pitchBorder.renderOrder = 1;
     scene.add(pitchBorder);
 
-    // mint-green infield apron (Genius&Gerry / Cairo refs — not dark grass)
-    const mintMat = new THREE.MeshLambertMaterial({
-      color: 0x5ecf72,
+    // Dark-blue infield apron between pitch and running track
+    // Keep base disk BELOW the pitch (y≈0) so distant cameras don't z-fight
+    const apronMat = new THREE.MeshLambertMaterial({
+      color: 0x0d2a5c,
       side: THREE.DoubleSide,
     });
-    const mintDeep = new THREE.MeshLambertMaterial({
-      color: 0x48b85c,
+    const apronDeep = new THREE.MeshLambertMaterial({
+      color: 0x0a224c,
       side: THREE.DoubleSide,
     });
-    // fill under whole track infield
-    const mintDisk = new THREE.Mesh(
+    const apronDisk = new THREE.Mesh(
       new THREE.CircleGeometry(1, 96),
-      mintDeep,
+      apronDeep,
     );
-    mintDisk.scale.set(TRACK.inRx - 0.2, TRACK.inRz - 0.2, 1);
-    mintDisk.rotation.x = -Math.PI / 2;
-    mintDisk.position.y = 0.02;
-    mintDisk.receiveShadow = true;
-    scene.add(mintDisk);
-    // ring from pitch edge to track inner (clears rectangular pitch)
+    apronDisk.scale.set(TRACK.inRx - 0.2, TRACK.inRz - 0.2, 1);
+    apronDisk.rotation.x = -Math.PI / 2;
+    apronDisk.position.y = 0;
+    apronDisk.receiveShadow = true;
+    apronDisk.renderOrder = 0;
+    scene.add(apronDisk);
+    // Visible ring only outside the pitch rectangle (not under the grass)
     scene.add(
       ringStrip(
-        FIELD.L / 2 + 0.55,
-        FIELD.W / 2 + 0.55,
-        0.03,
+        FIELD.L / 2 + 0.7,
+        FIELD.W / 2 + 0.7,
+        0.04,
         TRACK.inRx,
         TRACK.inRz,
-        0.03,
+        0.04,
         160,
-        mintMat,
+        apronMat,
         1,
       ),
     );
-    // light-blue pitchside markers / boards pads on mint apron
-    const markerMat = new THREE.MeshLambertMaterial({ color: 0x7eb6e8 });
+    // pitchside markers / board pads on dark apron
+    const markerMat = new THREE.MeshLambertMaterial({ color: 0x1a4a8c });
     const mkMarker = (x, z, w, d, rot = 0) => {
       const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.08, d), markerMat);
       m.position.set(x, 0.08, z);
@@ -994,96 +1005,210 @@ export function createStadium(opts = {}) {
       scene.add(grp);
     });
 
-    // glass / acrylic dugouts on the near (+Z) touchline — match Genius&Gerry refs
+    // Professional dugouts on the near (+Z) touchline — Ahly · Officials · Zamalek
     const dugoutZ = FIELD.W / 2 + 4.2;
     const glassMat = new THREE.MeshLambertMaterial({
-      color: 0xa8d4f0,
+      color: 0x9ecae8,
       transparent: true,
-      opacity: 0.32,
+      opacity: 0.28,
       side: THREE.DoubleSide,
     });
-    const frameMat = new THREE.MeshLambertMaterial({ color: 0x1a1f28 });
-    const blueSeat = new THREE.MeshLambertMaterial({ color: 0x1a4f9c });
-    const blueRest = new THREE.MeshLambertMaterial({ color: 0x0f3370 });
-    const mkRacingSeat = (x, y, z, yaw) => {
+    const frameMat = new THREE.MeshLambertMaterial({ color: 0x1a2230 });
+    const floorMat = new THREE.MeshLambertMaterial({ color: 0x2a3344 });
+    const roofMat = new THREE.MeshLambertMaterial({ color: 0xd8e0ea });
+    const mkRacingSeat = (x, y, z, yaw, seatCol, restCol) => {
       const g = new THREE.Group();
-      const pan = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.08, 0.5), blueSeat);
-      pan.position.set(0, 0.42, 0.02);
-      const back = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.72, 0.08), blueRest);
-      back.position.set(0, 0.78, -0.22);
-      back.rotation.x = -0.12;
-      const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.55, 0.42), blueRest);
-      sideL.position.set(-0.24, 0.62, -0.02);
+      const seatM = new THREE.MeshLambertMaterial({ color: seatCol });
+      const restM = new THREE.MeshLambertMaterial({ color: restCol });
+      const base = new THREE.Mesh(
+        new THREE.BoxGeometry(0.42, 0.28, 0.38),
+        frameMat,
+      );
+      base.position.set(0, 0.2, 0.02);
+      const pan = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.09, 0.52), seatM);
+      pan.position.set(0, 0.44, 0.04);
+      const cushion = new THREE.Mesh(
+        new THREE.BoxGeometry(0.44, 0.05, 0.42),
+        seatM,
+      );
+      cushion.position.set(0, 0.5, 0.05);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.78, 0.09), restM);
+      back.position.set(0, 0.84, -0.22);
+      back.rotation.x = -0.14;
+      const head = new THREE.Mesh(
+        new THREE.BoxGeometry(0.36, 0.18, 0.08),
+        restM,
+      );
+      head.position.set(0, 1.18, -0.28);
+      const sideL = new THREE.Mesh(
+        new THREE.BoxGeometry(0.07, 0.58, 0.46),
+        restM,
+      );
+      sideL.position.set(-0.26, 0.68, -0.02);
       const sideR = sideL.clone();
-      sideR.position.x = 0.24;
-      g.add(pan, back, sideL, sideR);
+      sideR.position.x = 0.26;
+      g.add(base, pan, cushion, back, head, sideL, sideR);
       g.position.set(x, y, z);
       g.rotation.y = yaw;
       return g;
     };
     const dugSpecs = [
-      { cx: -18, w: 12.5, seats: 10 },
-      { cx: 0, w: 6.5, seats: 5 },
-      { cx: 18, w: 12.5, seats: 10 },
+      {
+        cx: -18,
+        w: 13.2,
+        seats: 9,
+        seat: 0x8b1010,
+        rest: 0x5a0808,
+        plate: 0x6e0000,
+        label: 'AL AHLY',
+      },
+      {
+        cx: 0,
+        w: 7.2,
+        seats: 6,
+        seat: 0x1a4f9c,
+        rest: 0x0f3370,
+        plate: 0x123a6e,
+        label: '4TH OFFICIAL',
+        solidSides: true,
+      },
+      {
+        cx: 18,
+        w: 13.2,
+        seats: 9,
+        seat: 0xf2f4f8,
+        rest: 0xc8ced8,
+        plate: 0x1a1a1a,
+        label: 'ZAMALEK',
+      },
     ];
     dugSpecs.forEach((d) => {
       const grp = new THREE.Group();
+      // raised platform + front step
       const floor = new THREE.Mesh(
-        new THREE.BoxGeometry(d.w, 0.18, 2.8),
-        new THREE.MeshLambertMaterial({ color: 0x2a303a }),
+        new THREE.BoxGeometry(d.w, 0.28, 3.5),
+        floorMat,
       );
-      floor.position.set(d.cx, 0.1, dugoutZ);
+      floor.position.set(d.cx, 0.14, dugoutZ);
+      floor.receiveShadow = true;
       grp.add(floor);
-      // dark frame posts
-      [-1, 1].forEach((s) => {
-        const post = new THREE.Mesh(
-          new THREE.BoxGeometry(0.1, 2.2, 0.1),
-          frameMat,
-        );
-        post.position.set(d.cx + s * (d.w * 0.48), 1.2, dugoutZ + 0.9);
-        grp.add(post);
-        const front = new THREE.Mesh(
-          new THREE.BoxGeometry(0.08, 2.0, 0.08),
-          frameMat,
-        );
-        front.position.set(d.cx + s * (d.w * 0.48), 1.1, dugoutZ - 1.1);
-        grp.add(front);
-      });
-      // acrylic front + sides + roof
-      const frontG = new THREE.Mesh(
-        new THREE.BoxGeometry(d.w - 0.3, 1.55, 0.06),
-        glassMat,
+      const step = new THREE.Mesh(
+        new THREE.BoxGeometry(d.w - 0.4, 0.12, 0.55),
+        new THREE.MeshLambertMaterial({ color: 0x3a4558 }),
       );
-      frontG.position.set(d.cx, 1.35, dugoutZ - 1.15);
-      grp.add(frontG);
-      [-1, 1].forEach((s) => {
-        const side = new THREE.Mesh(
-          new THREE.BoxGeometry(0.06, 1.7, 2.4),
-          glassMat,
-        );
-        side.position.set(d.cx + s * (d.w * 0.48), 1.35, dugoutZ);
-        grp.add(side);
-      });
-      const roof = new THREE.Mesh(
-        new THREE.BoxGeometry(d.w + 0.3, 0.08, 3.0),
-        glassMat,
-      );
-      roof.position.set(d.cx, 2.35, dugoutZ + 0.05);
-      roof.rotation.x = -0.18;
-      grp.add(roof);
-      const roofFrame = new THREE.Mesh(
-        new THREE.BoxGeometry(d.w + 0.4, 0.06, 0.1),
+      step.position.set(d.cx, 0.06, dugoutZ - 1.85);
+      grp.add(step);
+      // solid rear wall
+      const back = new THREE.Mesh(
+        new THREE.BoxGeometry(d.w, 2.35, 0.18),
         frameMat,
       );
-      roofFrame.position.set(d.cx, 2.42, dugoutZ - 1.25);
-      grp.add(roofFrame);
-      // blue racing seats facing pitch
-      const span = d.w - 1.2;
+      back.position.set(d.cx, 1.3, dugoutZ + 1.55);
+      grp.add(back);
+      // side walls — solid for officials box, glass+frame for team dugouts
+      [-1, 1].forEach((s) => {
+        if (d.solidSides) {
+          const side = new THREE.Mesh(
+            new THREE.BoxGeometry(0.16, 2.2, 3.2),
+            new THREE.MeshLambertMaterial({ color: 0x0f2a58 }),
+          );
+          side.position.set(d.cx + s * (d.w * 0.5 - 0.08), 1.25, dugoutZ);
+          grp.add(side);
+        } else {
+          const sideFrame = new THREE.Mesh(
+            new THREE.BoxGeometry(0.12, 2.25, 3.15),
+            frameMat,
+          );
+          sideFrame.position.set(d.cx + s * (d.w * 0.5 - 0.06), 1.28, dugoutZ);
+          grp.add(sideFrame);
+          const sideGlass = new THREE.Mesh(
+            new THREE.BoxGeometry(0.05, 1.75, 2.6),
+            glassMat,
+          );
+          sideGlass.position.set(
+            d.cx + s * (d.w * 0.5 - 0.14),
+            1.35,
+            dugoutZ - 0.1,
+          );
+          grp.add(sideGlass);
+        }
+        // corner posts
+        const post = new THREE.Mesh(
+          new THREE.BoxGeometry(0.12, 2.35, 0.12),
+          frameMat,
+        );
+        post.position.set(d.cx + s * (d.w * 0.5 - 0.06), 1.3, dugoutZ - 1.45);
+        grp.add(post);
+      });
+      // acrylic front screen + vertical mullions
+      const frontG = new THREE.Mesh(
+        new THREE.BoxGeometry(d.w - 0.35, 1.45, 0.06),
+        glassMat,
+      );
+      frontG.position.set(d.cx, 1.45, dugoutZ - 1.55);
+      grp.add(frontG);
+      const mullionN = Math.max(3, Math.round(d.w / 3.2));
+      for (let i = 0; i < mullionN; i++) {
+        const u = mullionN === 1 ? 0.5 : i / (mullionN - 1);
+        const mx = d.cx - (d.w * 0.42) + u * (d.w * 0.84);
+        const mull = new THREE.Mesh(
+          new THREE.BoxGeometry(0.07, 1.55, 0.07),
+          frameMat,
+        );
+        mull.position.set(mx, 1.45, dugoutZ - 1.55);
+        grp.add(mull);
+      }
+      // opaque sloping roof + edge trim
+      const roof = new THREE.Mesh(
+        new THREE.BoxGeometry(d.w + 0.45, 0.14, 3.7),
+        roofMat,
+      );
+      roof.position.set(d.cx, 2.58, dugoutZ + 0.05);
+      roof.rotation.x = -0.12;
+      grp.add(roof);
+      const roofLip = new THREE.Mesh(
+        new THREE.BoxGeometry(d.w + 0.5, 0.08, 0.12),
+        frameMat,
+      );
+      roofLip.position.set(d.cx, 2.48, dugoutZ - 1.7);
+      grp.add(roofLip);
+      // team / official plate on fascia
+      const plate = new THREE.Mesh(
+        new THREE.BoxGeometry(Math.min(d.w - 1.2, 7.5), 0.42, 0.08),
+        new THREE.MeshBasicMaterial({
+          color: d.plate,
+          toneMapped: false,
+        }),
+      );
+      plate.position.set(d.cx, 2.28, dugoutZ - 1.72);
+      grp.add(plate);
+      // continuous bench pads under seats for a solid look
+      const benchPad = new THREE.Mesh(
+        new THREE.BoxGeometry(d.w - 1.0, 0.16, 0.62),
+        new THREE.MeshLambertMaterial({ color: d.rest }),
+      );
+      benchPad.position.set(d.cx, 0.38, dugoutZ + 0.42);
+      grp.add(benchPad);
+      // racing seats facing pitch
+      const span = d.w - 1.5;
       for (let i = 0; i < d.seats; i++) {
         const t = d.seats === 1 ? 0.5 : i / (d.seats - 1);
         const sx = d.cx - span / 2 + t * span;
-        grp.add(mkRacingSeat(sx, 0.12, dugoutZ + 0.35, Math.PI));
+        grp.add(mkRacingSeat(sx, 0.14, dugoutZ + 0.38, Math.PI, d.seat, d.rest));
       }
+      // technical area line
+      const tech = new THREE.Mesh(
+        new THREE.BoxGeometry(d.w - 0.8, 0.035, 0.07),
+        new THREE.MeshBasicMaterial({ color: 0xffffff }),
+      );
+      tech.position.set(d.cx, 0.03, dugoutZ - 2.25);
+      grp.add(tech);
+      grp.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+        }
+      });
       scene.add(grp);
     });
   }
@@ -2749,6 +2874,8 @@ export function createStadium(opts = {}) {
     bkSnd: $('bk-snd'),
     sbHint: $('sb-hint'),
     d3d: $('d-3d'),
+    mm: $('mm') ? $('mm').getContext('2d') : null,
+    ov: $('ov') ? $('ov').getContext('2d') : null,
   };
 
   const applyOrbit = () => {
@@ -2925,6 +3052,7 @@ export function createStadium(opts = {}) {
     if (i >= 0) paintSeat(i, 0.4, 0.91, 0.98);
     if (seatSys.seatMesh.instanceColor)
       seatSys.seatMesh.instanceColor.needsUpdate = true;
+    drawOverviewBase();
   }
 
   let currentInfo = null;
@@ -3236,6 +3364,230 @@ export function createStadium(opts = {}) {
       3600,
     );
   });
+
+  /* ---------- minimaps (same pattern as Misr: camera card + overview) ---------- */
+  const ovBase = document.createElement('canvas');
+  const RXmax = BOWL.outRx + 4;
+  const RZmax = BOWL.outRz + 4;
+  function fillSectionWedge(x, cx, cy, sc, a0, a1, rInX, rInZ, rOutX, rOutZ, fill) {
+    x.beginPath();
+    for (let k = 0; k <= 10; k++) {
+      const a = a0 + ((a1 - a0) * k) / 10;
+      const px = cx + rInX * sc * Math.cos(a);
+      const py = cy + rInZ * sc * Math.sin(a);
+      k ? x.lineTo(px, py) : x.moveTo(px, py);
+    }
+    for (let k = 10; k >= 0; k--) {
+      const a = a0 + ((a1 - a0) * k) / 10;
+      x.lineTo(cx + rOutX * sc * Math.cos(a), cy + rOutZ * sc * Math.sin(a));
+    }
+    x.closePath();
+    x.fillStyle = fill;
+    x.fill();
+    x.strokeStyle = 'rgba(4,7,13,.85)';
+    x.lineWidth = 1;
+    x.stroke();
+  }
+  function drawOverviewBase() {
+    if (!ui.ov || !seatSys) return;
+    const cv = ui.ov.canvas;
+    ovBase.width = cv.width;
+    ovBase.height = cv.height;
+    const x = ovBase.getContext('2d');
+    const W = cv.width;
+    const H = cv.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    const sc = Math.min((W - 24) / (2 * RXmax), (H - 16) / (2 * RZmax));
+    x.clearRect(0, 0, W, H);
+    const SECTIONS = seatSys.SECTIONS;
+    const selSec = selectedIdx >= 0 ? seatSys.meta.secIdx[selectedIdx] : -1;
+    for (let s = 0; s < SECTIONS; s++) {
+      const a0 = (s / SECTIONS) * TAU;
+      const a1 = ((s + 1) / SECTIONS) * TAU;
+      const lowSel = selSec === s;
+      const upSel = selSec === s + SECTIONS;
+      fillSectionWedge(
+        x,
+        cx,
+        cy,
+        sc,
+        a0,
+        a1,
+        BOWL.inRx,
+        BOWL.inRz,
+        BOWL.midRx,
+        BOWL.midRz,
+        lowSel ? 'rgba(57,196,255,.9)' : 'rgba(18,78,168,.82)',
+      );
+      fillSectionWedge(
+        x,
+        cx,
+        cy,
+        sc,
+        a0,
+        a1,
+        BOWL.upInRx,
+        BOWL.upInRz,
+        BOWL.outRx,
+        BOWL.outRz,
+        upSel ? 'rgba(57,196,255,.9)' : 'rgba(12,48,110,.62)',
+      );
+    }
+    // track
+    x.beginPath();
+    x.ellipse(cx, cy, TRACK.outRx * sc, TRACK.outRz * sc, 0, 0, TAU);
+    x.ellipse(cx, cy, TRACK.inRx * sc, TRACK.inRz * sc, 0, 0, TAU);
+    x.fillStyle = '#c45328';
+    x.fill('evenodd');
+    x.strokeStyle = 'rgba(255,255,255,.55)';
+    x.lineWidth = 1;
+    x.beginPath();
+    x.ellipse(cx, cy, TRACK.outRx * sc, TRACK.outRz * sc, 0, 0, TAU);
+    x.stroke();
+    x.beginPath();
+    x.ellipse(cx, cy, TRACK.inRx * sc, TRACK.inRz * sc, 0, 0, TAU);
+    x.stroke();
+    // pitch
+    const pw = FIELD.L * sc;
+    const ph = FIELD.W * sc;
+    x.fillStyle = '#15602a';
+    x.fillRect(cx - pw / 2, cy - ph / 2, pw, ph);
+    x.strokeStyle = 'rgba(240,250,255,.75)';
+    x.lineWidth = 1;
+    x.strokeRect(cx - pw / 2 + 2, cy - ph / 2 + 2, pw - 4, ph - 4);
+    x.beginPath();
+    x.moveTo(cx, cy - ph / 2 + 2);
+    x.lineTo(cx, cy + ph / 2 - 2);
+    x.stroke();
+    x.beginPath();
+    x.arc(cx, cy, ph * 0.13, 0, TAU);
+    x.stroke();
+    ui._ovScale = sc;
+  }
+  function drawOverview() {
+    if (!ui.ov || !seatSys) return;
+    const x = ui.ov;
+    const W = x.canvas.width;
+    const H = x.canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    const sc = ui._ovScale || 1;
+    x.clearRect(0, 0, W, H);
+    x.drawImage(ovBase, 0, 0);
+    if (selectedIdx >= 0) {
+      const m = seatSys.meta;
+      const px = cx + m.pos[selectedIdx * 3] * sc;
+      const py = cy + m.pos[selectedIdx * 3 + 2] * sc;
+      x.beginPath();
+      x.arc(px, py, 4, 0, TAU);
+      x.fillStyle = '#eaffff';
+      x.fill();
+      x.beginPath();
+      x.arc(px, py, 8, 0, TAU);
+      x.strokeStyle = 'rgba(57,196,255,.9)';
+      x.lineWidth = 2;
+      x.stroke();
+      x.font = '700 15px ' + getComputedStyle(document.body).fontFamily;
+      x.fillStyle = '#dff4ff';
+      x.textAlign = 'center';
+      x.fillText(String(m.label[selectedIdx]), px, py - 14);
+    }
+  }
+  function drawMiniMap() {
+    if (!ui.mm) return;
+    const x = ui.mm;
+    const W = x.canvas.width;
+    const H = x.canvas.height;
+    const cx = W / 2;
+    const cy = H / 2;
+    const sc = Math.min((W - 30) / (2 * RXmax), (H - 24) / (2 * RZmax));
+    x.clearRect(0, 0, W, H);
+    // lower + upper rings
+    [
+      [
+        (BOWL.inRx + BOWL.midRx) / 2,
+        (BOWL.inRz + BOWL.midRz) / 2,
+        BOWL.midRx - BOWL.inRx,
+        'rgba(30,90,190,.55)',
+      ],
+      [
+        (BOWL.upInRx + BOWL.outRx) / 2,
+        (BOWL.upInRz + BOWL.outRz) / 2,
+        BOWL.outRx - BOWL.upInRx,
+        'rgba(20,55,140,.5)',
+      ],
+    ].forEach(([rx, rz, w, col]) => {
+      x.beginPath();
+      x.ellipse(cx, cy, rx * sc, rz * sc, 0, 0, TAU);
+      x.lineWidth = Math.max(4, w * sc * 0.55);
+      x.strokeStyle = col;
+      x.stroke();
+    });
+    x.beginPath();
+    x.ellipse(cx, cy, TRACK.outRx * sc, TRACK.outRz * sc, 0, 0, TAU);
+    x.ellipse(cx, cy, TRACK.inRx * sc, TRACK.inRz * sc, 0, 0, TAU);
+    x.fillStyle = '#c45328';
+    x.fill('evenodd');
+    const pw = FIELD.L * sc;
+    const ph = FIELD.W * sc;
+    x.fillStyle = '#187031';
+    x.fillRect(cx - pw / 2, cy - ph / 2, pw, ph);
+    x.strokeStyle = 'rgba(235,248,255,.8)';
+    x.lineWidth = 1.5;
+    x.strokeRect(cx - pw / 2 + 3, cy - ph / 2 + 3, pw - 6, ph - 6);
+    x.beginPath();
+    x.moveTo(cx, cy - ph / 2 + 3);
+    x.lineTo(cx, cy + ph / 2 - 3);
+    x.stroke();
+    x.beginPath();
+    x.arc(cx, cy, ph * 0.14, 0, TAU);
+    x.stroke();
+    if (selectedIdx >= 0 && seatSys) {
+      const m = seatSys.meta;
+      const px = cx + m.pos[selectedIdx * 3] * sc;
+      const py = cy + m.pos[selectedIdx * 3 + 2] * sc;
+      x.beginPath();
+      x.arc(px, py, 4, 0, TAU);
+      x.fillStyle = '#67e8f9';
+      x.fill();
+    }
+    const camA = Math.atan2(
+      camera.position.z / RZmax,
+      camera.position.x / RXmax,
+    );
+    const camD = Math.min(
+      1.25,
+      Math.hypot(camera.position.x / RXmax, camera.position.z / RZmax),
+    );
+    const px = cx + Math.cos(camA) * camD * RXmax * sc;
+    const py = cy + Math.sin(camA) * camD * RZmax * sc;
+    x.beginPath();
+    x.moveTo(px, py);
+    x.lineTo(cx, cy);
+    x.strokeStyle = 'rgba(57,196,255,.35)';
+    x.lineWidth = 2;
+    x.stroke();
+    x.beginPath();
+    x.arc(px, py, 9, 0, TAU);
+    x.fillStyle = '#2f9bff';
+    x.fill();
+    x.beginPath();
+    x.arc(px, py, 9, 0, TAU);
+    x.strokeStyle = 'rgba(255,255,255,.85)';
+    x.lineWidth = 2;
+    x.stroke();
+    x.fillStyle = '#fff';
+    x.fillRect(px - 4, py - 2.5, 6, 5);
+    x.beginPath();
+    x.moveTo(px + 2, py);
+    x.lineTo(px + 5, py - 2.5);
+    x.lineTo(px + 5, py + 2.5);
+    x.closePath();
+    x.fill();
+  }
+
+  /* ---------- seat panel + controls ---------- */
   bind('bk-exit', exitSeatMode);
   bind('bk-snd', () => {
     muted = !muted;
@@ -3267,18 +3619,24 @@ export function createStadium(opts = {}) {
     }
   });
 
-  // seed featured seat in panel
+  // seed featured seat in panel (Misr-style right column)
   if (seatSys) {
     const m = seatSys.meta;
     let featured = Math.floor(seatSys.SEAT_COUNT * 0.35);
     for (let i = 0; i < seatSys.SEAT_COUNT; i++) {
-      if (m.tier[i] === 0 && m.row[i] === 12) {
+      if (
+        m.tier[i] === 0 &&
+        m.row[i] === 12 &&
+        Math.cos(Math.atan2(m.pos[i * 3 + 2], m.pos[i * 3]) - Math.PI / 2) > 0.55
+      ) {
         featured = i;
         break;
       }
     }
+    applySelection(featured);
     currentInfo = seatInfo(featured);
     updatePanel(currentInfo, 'ready');
+    drawOverviewBase();
   }
 
   const teamNames = document.querySelectorAll('#match .team .name');
@@ -3355,10 +3713,19 @@ export function createStadium(opts = {}) {
       camera.lookAt(look);
     }
 
+    drawMiniMap();
+    drawOverview();
     renderer.render(scene, camera);
     if (firstFrame) {
       firstFrame = false;
       if (loader) loader.classList.add('hide');
+      if (currentInfo) {
+        setTimeout(() => {
+          try {
+            captureView(currentInfo.i);
+          } catch (_) {}
+        }, 60);
+      }
       toast(
         'Cairo International · click a seat for spectator view',
         4000,

@@ -1,10 +1,18 @@
 import {
   DEFAULT_STADIUM_ID,
   getStadiumMeta,
+  otherStadiumId,
   resolveStadiumId,
   STADIUM_CATALOG,
   STADIUM_LOADERS,
 } from './registry.js';
+
+export {
+  DEFAULT_STADIUM_ID,
+  getStadiumMeta,
+  otherStadiumId,
+  resolveStadiumId,
+};
 
 let active = null;
 /** @type {Promise<any> | null} */
@@ -25,7 +33,7 @@ function applyBranding(meta) {
   document.title = `${meta.name} · Stadium View`;
   document.body.dataset.stadium = meta.id;
   document.body.classList.toggle('stadium-draft', !!meta.draft);
-  document.body.classList.toggle('stadium-noseats', meta.seats === false);
+  document.body.classList.remove('stadium-noseats');
 
   const flags = document.querySelectorAll('#match .flag');
   if (flags[0]) {

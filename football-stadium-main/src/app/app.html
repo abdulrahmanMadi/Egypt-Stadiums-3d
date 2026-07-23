@@ -36,10 +36,28 @@
         </div>
       </div>
       <div class="nav-chip">Explore · Preview seats · Orbit freely</div>
-      <label class="stadium-switch" aria-label="Choose stadium">
-        <span class="stadium-switch-label">Stadium</span>
-        <select id="stadium-select"></select>
-      </label>
+      <button
+        type="button"
+        class="stadium-switch-btn"
+        id="stadium-switch-btn"
+        aria-label="Open the other stadium"
+      >
+        <span class="ss-kicker" id="ss-kicker">View stadium</span>
+        <span class="ss-current">
+          <span class="ss-name" id="ss-name">Cairo International Stadium</span>
+          <span class="ss-loc" id="ss-loc">Nasr City, Cairo</span>
+        </span>
+        <svg
+          class="ss-arrow"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          aria-hidden="true"
+        >
+          <path d="M5 12h14M13 6l6 6-6 6" />
+        </svg>
+      </button>
     </nav>
 
     <section id="match" class="card" aria-label="Match info">
@@ -184,41 +202,6 @@
         </button>
         <div class="secure">Explore only · no ticket booking</div>
       </section>
-    </div>
-
-    <div id="dock" role="toolbar" aria-label="3D view controls">
-      <button class="dock-btn" id="d-reset" aria-label="Reset orbit">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <circle cx="12" cy="12" r="3.4" />
-          <path
-            d="M20.5 12c0 1.9-3.8 3.5-8.5 3.5S3.5 13.9 3.5 12 7.3 8.5 12 8.5s8.5 1.6 8.5 3.5Z"
-            transform="rotate(-24 12 12)"
-          />
-        </svg>
-      </button>
-      <button class="dock-btn active" id="d-3d" aria-pressed="true">3D</button>
-      <button class="dock-btn" id="d-vr" aria-label="VR mode">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-3.6a2 2 0 0 1-1.6-.8l-.6-.8a2 2 0 0 0-3.2 0l-.6.8a2 2 0 0 1-1.6.8H5a2 2 0 0 1-2-2V8Z"
-          />
-          <circle cx="8.2" cy="11" r="1.2" fill="currentColor" />
-          <circle cx="15.8" cy="11" r="1.2" fill="currentColor" />
-        </svg>
-      </button>
-      <div class="dock-sep"></div>
-      <button class="dock-btn" id="d-zout" aria-label="Zoom out">−</button>
-      <button class="dock-btn" id="d-zin" aria-label="Zoom in">+</button>
     </div>
 
     <div id="sb-hint">Drag to look around · scroll to zoom</div>
