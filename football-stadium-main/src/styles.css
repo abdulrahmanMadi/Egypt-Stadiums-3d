@@ -33,6 +33,7 @@ body {
   inset: 0;
   display: block;
   cursor: grab;
+  touch-action: none;
 }
 #c:focus-visible {
   outline: 3px solid #66d4ff;
@@ -528,6 +529,16 @@ body.stadium-draft #rightcol {
   right: auto;
   flex: none;
   pointer-events: auto;
+}
+.rightcol-toggle {
+  display: none;
+}
+#rightcol #camcard {
+  position: fixed;
+  left: 24px;
+  right: auto;
+  bottom: 24px;
+  width: 292px;
 }
 
 #tifo-card {
@@ -1080,9 +1091,18 @@ body.stadium-draft #rightcol {
 }
 
 @media (max-width: 1180px) {
-  #match,
-  #overview {
+  #match {
     display: none;
+  }
+  #overview {
+    display: block;
+    order: 3;
+    padding: 10px 12px;
+  }
+  #overview canvas {
+    width: 100%;
+    height: auto;
+    max-height: 120px;
   }
   #rightcol {
     top: auto;
@@ -1090,34 +1110,249 @@ body.stadium-draft #rightcol {
     right: 0;
     left: 0;
     width: auto;
-    max-height: 46vh;
-    padding: 0 14px 24px;
+    max-height: min(48vh, 420px);
+    padding: 0 12px calc(12px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+    pointer-events: none;
   }
-  #camcard {
+  .rightcol-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    order: -2;
+    width: 100%;
+    height: 40px;
+    border: 1px solid var(--line);
+    border-radius: 14px 14px 0 0;
+    background: var(--paper);
+    box-shadow: var(--shadow-sm);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    pointer-events: auto;
+    flex: none;
+  }
+  .rightcol-toggle::before {
+    content: "";
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(14, 165, 233, 0.45);
+  }
+  #rightcol.is-collapsed {
+    max-height: calc(52px + env(safe-area-inset-bottom, 0px));
+    overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  #rightcol.is-collapsed .card {
     display: none;
+  }
+  #rightcol:not(.is-collapsed) .rightcol-toggle {
+    border-radius: 14px;
+  }
+  #seatcard {
+    order: -1;
+    padding: 12px 14px;
+  }
+  #seatcard header {
+    margin-bottom: 8px;
+  }
+  #p-section {
+    font-size: 18px;
+    margin-bottom: 2px;
+  }
+  #p-sub {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  .seat-grid {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    gap: 6px;
+  }
+  .seat-grid .cell .v {
+    font-size: 15px;
+  }
+  .preview {
+    aspect-ratio: 2.1 / 1;
+    margin-bottom: 8px;
+  }
+  #checkout {
+    height: 42px;
+    font-size: 13px;
+  }
+  #share-seat {
+    height: 32px;
+    margin-top: 6px;
+  }
+  .secure {
+    margin-top: 6px;
+    font-size: 10px;
+  }
+  #tifo-card {
+    order: 2;
+    padding: 10px 12px;
+  }
+  .tifo-image-preview {
+    height: 52px;
+  }
+  .tifo-blocks {
+    max-height: 56px;
+  }
+  #rightcol #camcard {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    order: 1;
+    padding: 10px 12px;
+  }
+  #camcard .cam-body {
+    display: flex;
+  }
+  #mm {
+    width: 140px;
+    height: 88px;
+  }
+  #camcard footer {
+    display: flex;
+    margin-top: 8px;
+    font-size: 10px;
+  }
+  .crowd-capacity-control {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .experience-controls {
+    margin-top: 8px;
   }
   .nav-chip {
     display: none;
   }
   .stadium-switch-btn {
     min-width: 0;
-    max-width: min(220px, 58vw);
-    padding: 8px 12px;
+    max-width: min(180px, 42vw);
+    padding: 7px 10px;
+    column-gap: 8px;
+    border-radius: 12px;
+  }
+  .ss-kicker {
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+  .ss-name {
+    font-size: 12px;
   }
   .ss-loc {
+    display: none;
+  }
+  .site-credit {
     display: none;
   }
 }
 @media (max-width: 650px) {
   nav {
-    height: 70px;
-    padding: 0 14px;
+    height: 64px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .brand {
+    gap: 8px;
+    padding: 6px 10px 6px 8px;
+    border-radius: 12px;
+    min-width: 0;
+    flex: 1 1 auto;
+    max-width: calc(100% - 150px);
+  }
+  .brand-text {
+    min-width: 0;
+  }
+  .brand > svg {
+    width: 28px;
+    height: 28px;
+    flex: none;
   }
   .brand-name {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .brand-sub {
+    font-size: 8px;
+  }
+  .stadium-switch-btn {
+    flex: 0 0 auto;
+    max-width: 132px;
+    min-width: 0;
+    padding: 6px 8px;
+  }
+  .ss-name {
+    font-size: 11px;
+  }
+  #rightcol {
+    max-height: min(46vh, 400px);
+    padding: 0 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  #rightcol #camcard {
+    padding: 8px 10px;
+    border-radius: 12px;
+  }
+  #camcard .help {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+  #mm {
+    width: 120px;
+    height: 76px;
+  }
+  .experience-controls select,
+  #fullscreen-toggle {
+    height: 28px;
+    font-size: 10px;
+  }
+  #seatcard {
+    padding: 10px 12px;
+  }
+  #seatcard .label {
+    padding: 4px 8px;
+    font-size: 9px;
+  }
+  #p-section {
+    font-size: 16px;
+  }
+  .seat-grid {
+    display: grid;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  .seat-grid .cell .v {
     font-size: 14px;
   }
-  .site-credit {
-    right: 14px;
+  .preview {
+    aspect-ratio: 2.4 / 1;
+  }
+  .preview .ph {
+    font-size: 11px;
+  }
+  #checkout {
+    height: 40px;
+    border-radius: 10px;
+  }
+  #share-seat {
+    height: 30px;
+    font-size: 11px;
+  }
+  #tifo-card {
+    display: block;
+  }
+  #overview canvas {
+    max-height: 100px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

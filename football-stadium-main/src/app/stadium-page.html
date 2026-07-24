@@ -100,90 +100,99 @@
       </div>
     </section>
 
-    <section id="camcard" class="card" aria-label="Camera controls">
-      <header>
-        <div class="card-title">Camera</div>
-        <button class="help" id="cc-help" aria-label="Controls help">?</button>
-      </header>
-      <div class="cam-body">
-        <canvas id="mm" width="400" height="252" aria-hidden="true"></canvas>
-        <div class="cam-btns">
-          <button class="sq-btn" id="cc-reset" aria-label="Reset camera">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path d="M20 11a8 8 0 1 0-2.3 5.7" />
-              <path d="M20 4v7h-7" />
-            </svg>
-          </button>
-          <button class="sq-btn" id="cc-zin" aria-label="Zoom in">+</button>
-          <button class="sq-btn" id="cc-zout" aria-label="Zoom out">−</button>
-        </div>
-      </div>
-      <div class="crowd-capacity-control">
-        <label for="crowd-capacity">
-          Crowd capacity
-          <output id="crowd-capacity-value" for="crowd-capacity">80%</output>
-        </label>
-        <input
-          id="crowd-capacity"
-          type="range"
-          min="0"
-          max="100"
-          step="10"
-          value="80"
-          aria-label="Crowd capacity percentage"
-        />
-      </div>
-      <div class="experience-controls">
-        <label>
-          Quality
-          <select id="quality-mode" aria-label="Graphics quality">
-            <option value="auto">Auto</option>
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="ultra">Ultra</option>
-          </select>
-        </label>
-        <div class="control-row">
-          <label>
-            Time
-            <select id="time-of-day" aria-label="Time of day">
-              <option value="day">Day</option>
-              <option value="night">Night</option>
-            </select>
-          </label>
-          <label>
-            Weather
-            <select id="weather-mode" aria-label="Weather">
-              <option value="clear">Clear</option>
-              <option value="fog">Fog</option>
-              <option value="rain">Rain</option>
-            </select>
-          </label>
-        </div>
-        <button type="button" id="fullscreen-toggle">Enter fullscreen</button>
-      </div>
-      <footer>
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            d="M9 11.2V7a3 3 0 0 1 6 0v4.2M7 11h10l-.8 8.2a2 2 0 0 1-2 1.8H9.8a2 2 0 0 1-2-1.8L7 11Z"
-          />
-        </svg>
-        Drag to orbit · Scroll to zoom
-      </footer>
-    </section>
-
     <div id="rightcol">
+      <button
+        type="button"
+        id="rightcol-toggle"
+        class="rightcol-toggle"
+        aria-expanded="false"
+        aria-controls="rightcol"
+      >
+        Controls
+      </button>
+      <section id="camcard" class="card" aria-label="Camera controls">
+        <header>
+          <div class="card-title">Camera</div>
+          <button class="help" id="cc-help" aria-label="Controls help">?</button>
+        </header>
+        <div class="cam-body">
+          <canvas id="mm" width="400" height="252" aria-hidden="true"></canvas>
+          <div class="cam-btns">
+            <button class="sq-btn" id="cc-reset" aria-label="Reset camera">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M20 11a8 8 0 1 0-2.3 5.7" />
+                <path d="M20 4v7h-7" />
+              </svg>
+            </button>
+            <button class="sq-btn" id="cc-zin" aria-label="Zoom in">+</button>
+            <button class="sq-btn" id="cc-zout" aria-label="Zoom out">−</button>
+          </div>
+        </div>
+        <div class="crowd-capacity-control">
+          <label for="crowd-capacity">
+            Crowd capacity
+            <output id="crowd-capacity-value" for="crowd-capacity">80%</output>
+          </label>
+          <input
+            id="crowd-capacity"
+            type="range"
+            min="0"
+            max="100"
+            step="10"
+            value="80"
+            aria-label="Crowd capacity percentage"
+          />
+        </div>
+        <div class="experience-controls">
+          <label>
+            Quality
+            <select id="quality-mode" aria-label="Graphics quality">
+              <option value="auto">Auto</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="ultra">Ultra</option>
+            </select>
+          </label>
+          <div class="control-row">
+            <label>
+              Time
+              <select id="time-of-day" aria-label="Time of day">
+                <option value="day">Day</option>
+                <option value="night">Night</option>
+              </select>
+            </label>
+            <label>
+              Weather
+              <select id="weather-mode" aria-label="Weather">
+                <option value="clear">Clear</option>
+                <option value="fog">Fog</option>
+                <option value="rain">Rain</option>
+              </select>
+            </label>
+          </div>
+          <button type="button" id="fullscreen-toggle">Enter fullscreen</button>
+        </div>
+        <footer>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M9 11.2V7a3 3 0 0 1 6 0v4.2M7 11h10l-.8 8.2a2 2 0 0 1-2 1.8H9.8a2 2 0 0 1-2-1.8L7 11Z"
+            />
+          </svg>
+          Drag to orbit · Scroll to zoom
+        </footer>
+      </section>
+
       <section id="tifo-card" class="card" aria-label="Stand tifo designer">
         <header>
           <div>

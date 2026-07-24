@@ -3873,9 +3873,10 @@ export function createStadium(opts = {}) {
           return;
         }
         if (mode === "orbit") {
-          orbit.thetaT -= dx * 0.0045;
+          const touchScale = e.pointerType === "touch" ? 1.55 : 1;
+          orbit.thetaT -= dx * 0.0045 * touchScale;
           orbit.phiT = THREE.MathUtils.clamp(
-            orbit.phiT - dy * 0.003,
+            orbit.phiT - dy * 0.003 * touchScale,
             0.14,
             1.46,
           );
@@ -3886,9 +3887,10 @@ export function createStadium(opts = {}) {
           hideTip();
         } else if (mode === "seat") {
           // Unrestricted horizontal look for a complete 360° spectator view.
-          seatView.yawOff -= dx * 0.0032;
+          const touchScale = e.pointerType === "touch" ? 1.45 : 1;
+          seatView.yawOff -= dx * 0.0032 * touchScale;
           seatView.pitchOff = THREE.MathUtils.clamp(
-            seatView.pitchOff + dy * 0.0024,
+            seatView.pitchOff + dy * 0.0024 * touchScale,
             -0.55,
             0.55,
           );

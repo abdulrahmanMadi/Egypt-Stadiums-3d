@@ -81,6 +81,35 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
       );
     }
 
+    const rightcol = document.getElementById('rightcol');
+    const rightcolToggle = document.getElementById(
+      'rightcol-toggle',
+    ) as HTMLButtonElement | null;
+    if (rightcol && rightcolToggle) {
+      const mobileQuery = window.matchMedia('(max-width: 1180px)');
+      const syncCollapsed = () => {
+        const collapsed = mobileQuery.matches;
+        rightcol.classList.toggle('is-collapsed', collapsed);
+        rightcolToggle.setAttribute('aria-expanded', String(!collapsed));
+        rightcolToggle.textContent = collapsed ? 'Controls' : 'Hide controls';
+      };
+      syncCollapsed();
+      const onToggle = () => {
+        if (!mobileQuery.matches) return;
+        const next = !rightcol.classList.contains('is-collapsed');
+        rightcol.classList.toggle('is-collapsed', next);
+        rightcolToggle.setAttribute('aria-expanded', String(!next));
+        rightcolToggle.textContent = next ? 'Controls' : 'Hide controls';
+      };
+      const onBreakpoint = () => syncCollapsed();
+      rightcolToggle.addEventListener('click', onToggle);
+      mobileQuery.addEventListener('change', onBreakpoint);
+      this.cleanupUi.push(() => {
+        rightcolToggle.removeEventListener('click', onToggle);
+        mobileQuery.removeEventListener('change', onBreakpoint);
+      });
+    }
+
     const qualitySelect = document.getElementById(
       'quality-mode',
     ) as HTMLSelectElement | null;
