@@ -184,6 +184,54 @@
     </section>
 
     <div id="rightcol">
+      <section id="tifo-card" class="card" aria-label="Stand tifo designer">
+        <header>
+          <div>
+            <div class="card-title">Stand Tifo</div>
+            <div class="tifo-subtitle">Upload an image and choose blocks</div>
+          </div>
+        </header>
+        <label class="tifo-upload" for="tifo-file">
+          <input id="tifo-file" type="file" accept="image/png,image/jpeg,image/webp" />
+          <span>Choose image</span>
+        </label>
+        <div class="tifo-image-help">
+          Recommended: 1800 × 600 px · PNG, JPG or WebP
+        </div>
+        <div class="tifo-image-preview">
+          <img id="tifo-image" alt="Uploaded tifo preview" />
+          <span id="tifo-image-placeholder">No image selected</span>
+        </div>
+        <div class="tifo-block-heading">
+          <span>Select blocks</span>
+          <button type="button" id="tifo-select-all">Select all</button>
+        </div>
+        <div class="tifo-templates" aria-label="Block selection templates">
+          <button type="button" data-tifo-template="107,108,109,110,111,112">
+            Lower 107–112
+          </button>
+          <button type="button" data-tifo-template="207,208,209,210,211,212">
+            Upper 207–212
+          </button>
+          <button
+            type="button"
+            data-tifo-template="107,108,109,110,111,112,207,208,209,210,211,212"
+          >
+            Full 107–112 + 207–212
+          </button>
+        </div>
+        <div id="tifo-blocks" class="tifo-blocks" role="group" aria-label="Tifo blocks"></div>
+        <div id="tifo-status" class="tifo-status" role="status">
+          Upload an image to start
+        </div>
+        <div class="tifo-actions">
+          <button type="button" id="tifo-preview-btn" disabled>Preview</button>
+          <button type="button" id="tifo-apply-btn" disabled>Apply</button>
+          <button type="button" id="tifo-cancel-btn" disabled>Cancel</button>
+          <button type="button" id="tifo-clear-btn">Clear</button>
+        </div>
+      </section>
+
       <section id="overview" class="card" aria-label="Stadium overview">
         <header>
           <div class="card-title">Overview</div>

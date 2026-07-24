@@ -97,6 +97,26 @@ export function getCurrentSeat() {
   return active?.getCurrentSeat?.() || null;
 }
 
+export function listTifoBlocks() {
+  return active?.listTifoBlocks?.() || [];
+}
+
+export function previewTifo(image, blockLabels) {
+  return active?.previewTifo?.(image, blockLabels) || false;
+}
+
+export function applyTifo() {
+  return active?.applyTifo?.() || false;
+}
+
+export function cancelTifo() {
+  return active?.cancelTifo?.() || false;
+}
+
+export function clearTifo() {
+  return active?.clearTifo?.() || false;
+}
+
 function applyBranding(meta) {
   const nameEl = document.querySelector('.brand-name');
   const subEl = document.querySelector('.brand-sub');

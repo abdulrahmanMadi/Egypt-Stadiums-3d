@@ -24,6 +24,8 @@ export function createStadium(opts = {}) {
   let disposed = false;
   let rafId = 0;
   const crowdMeshes = [];
+  let tifoPreviewMesh = null;
+  let appliedTifoMesh = null;
   const on = (target, type, fn, options) => {
     if (!target) return;
     target.addEventListener(type, fn, options);
@@ -4626,6 +4628,169 @@ export function createStadium(opts = {}) {
         }
       }
 
+      function listTifoBlocks() {
+        return sections.map((section) => ({
+          label: section.label,
+          tier: section.tier,
+          seatCount: section.count,
+        }));
+      }
+
+      function disposeTifoMesh(mesh) {
+        if (!mesh) return;
+        scene.remove(mesh);
+        mesh.geometry.dispose();
+        mesh.material.map?.dispose();
+        mesh.material.dispose();
+      }
+
+      function cancelTifoPreview() {
+        if (!tifoPreviewMesh) return false;
+        disposeTifoMesh(tifoPreviewMesh);
+        tifoPreviewMesh = null;
+        return true;
+      }
+
+      function previewTifo(image, blockLabels) {
+        if (!image?.data || !blockLabels?.length) return false;
+        cancelTifoPreview();
+        const labels = Array.from(new Set(blockLabels.map(Number)))
+          .filter((label) => Number.isFinite(label))
+          .sort((a, b) => a - b);
+        const tierByLabel = new Map(
+          sections.map((section) => [section.label, section.tier]),
+        );
+        const labelsByTier = new Map();
+        labels.forEach((label) => {
+          const tier = tierByLabel.get(label);
+          if (tier == null) return;
+          const tierLabels = labelsByTier.get(tier) || [];
+          tierLabels.push(label);
+          labelsByTier.set(tier, tierLabels);
+        });
+        const tiers = Array.from(labelsByTier.keys()).sort((a, b) => a - b);
+        const tierOrder = new Map(tiers.map((tier, index) => [tier, index]));
+        const selectedLabels = new Set(
+          Array.from(labelsByTier.values()).flat(),
+        );
+        const limits = new Map(
+          labels.map((label) => [label, { row: 1, seat: 1 }]),
+        );
+        const seatIndices = [];
+        for (let i = 0; i < SEAT_COUNT; i++) {
+          const label = sections[meta.secIdx[i]]?.label;
+          if (!selectedLabels.has(label)) continue;
+          seatIndices.push(i);
+          const limit = limits.get(label);
+          limit.row = Math.max(limit.row, meta.row[i]);
+          limit.seat = Math.max(limit.seat, meta.seatNum[i]);
+        }
+        if (!seatIndices.length) return false;
+
+        const positions = [];
+        const uvs = [];
+        const indices = [];
+        seatIndices.forEach((seatIndex, panelIndex) => {
+          const label = sections[meta.secIdx[seatIndex]].label;
+          const limit = limits.get(label);
+          const tier = sections[meta.secIdx[seatIndex]].tier;
+          const tierLabels = labelsByTier.get(tier);
+          const blockIndex = tierLabels.indexOf(label);
+          const u0 =
+            (blockIndex +
+              (meta.seatNum[seatIndex] - 1) / limit.seat) /
+            tierLabels.length;
+          const u1 =
+            (blockIndex + meta.seatNum[seatIndex] / limit.seat) /
+            tierLabels.length;
+          const v0 =
+            (tierOrder.get(tier) + (meta.row[seatIndex] - 1) / limit.row) /
+            tiers.length;
+          const v1 =
+            (tierOrder.get(tier) + meta.row[seatIndex] / limit.row) /
+            tiers.length;
+          const offset = seatIndex * 3;
+          const yaw = meta.yaw[seatIndex];
+          const rightX = Math.cos(yaw);
+          const rightZ = -Math.sin(yaw);
+          const forwardX = Math.sin(yaw) * 0.08;
+          const forwardZ = Math.cos(yaw) * 0.08;
+          const x = meta.pos[offset] + forwardX;
+          const y = meta.pos[offset + 1];
+          const z = meta.pos[offset + 2] + forwardZ;
+          const halfWidth = 0.34;
+          const bottom = y + 1.05;
+          const top = y + 1.62;
+          positions.push(
+            x + rightX * halfWidth,
+            bottom,
+            z + rightZ * halfWidth,
+            x - rightX * halfWidth,
+            bottom,
+            z - rightZ * halfWidth,
+            x - rightX * halfWidth,
+            top,
+            z - rightZ * halfWidth,
+            x + rightX * halfWidth,
+            top,
+            z + rightZ * halfWidth,
+          );
+          uvs.push(u0, v0, u1, v0, u1, v1, u0, v1);
+          const vertex = panelIndex * 4;
+          indices.push(
+            vertex,
+            vertex + 1,
+            vertex + 2,
+            vertex,
+            vertex + 2,
+            vertex + 3,
+          );
+        });
+
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute(
+          "position",
+          new THREE.Float32BufferAttribute(positions, 3),
+        );
+        geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+        geometry.setIndex(indices);
+        geometry.computeVertexNormals();
+        const imageCanvas = document.createElement("canvas");
+        imageCanvas.width = image.width;
+        imageCanvas.height = image.height;
+        imageCanvas.getContext("2d").putImageData(image, 0, 0);
+        const texture = new THREE.CanvasTexture(imageCanvas);
+        texture.encoding = THREE.sRGBEncoding;
+        const material = new THREE.MeshBasicMaterial({
+          map: texture,
+          side: THREE.DoubleSide,
+          transparent: true,
+          alphaTest: 0.05,
+          toneMapped: false,
+        });
+        tifoPreviewMesh = new THREE.Mesh(geometry, material);
+        tifoPreviewMesh.frustumCulled = false;
+        tifoPreviewMesh.renderOrder = 4;
+        scene.add(tifoPreviewMesh);
+        return true;
+      }
+
+      function applyTifoPreview() {
+        if (!tifoPreviewMesh) return false;
+        disposeTifoMesh(appliedTifoMesh);
+        appliedTifoMesh = tifoPreviewMesh;
+        tifoPreviewMesh = null;
+        return true;
+      }
+
+      function clearAppliedTifo() {
+        const hadTifo = !!tifoPreviewMesh || !!appliedTifoMesh;
+        cancelTifoPreview();
+        disposeTifoMesh(appliedTifoMesh);
+        appliedTifoMesh = null;
+        return hadTifo;
+      }
+
       /* ---------- boot ---------- */
       applySelection(featuredIdx);
       currentInfo = seatInfo(featuredIdx);
@@ -4677,6 +4842,11 @@ export function createStadium(opts = {}) {
               }
             : null;
         },
+        listTifoBlocks,
+        previewTifo,
+        applyTifo: applyTifoPreview,
+        cancelTifo: cancelTifoPreview,
+        clearTifo: clearAppliedTifo,
         dispose() {
           if (disposed) return;
           disposed = true;

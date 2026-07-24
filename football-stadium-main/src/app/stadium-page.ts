@@ -9,6 +9,9 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Subscription } from 'rxjs';
 import {
+  applyTifo,
+  cancelTifo,
+  clearTifo,
   disposeActiveStadium,
   getActiveStadiumId,
   getCrowdCapacity,
@@ -17,7 +20,9 @@ import {
   getQualityMode,
   getStadiumMeta,
   initStadium,
+  listTifoBlocks,
   openSeat,
+  previewTifo,
   otherStadiumId,
   resolveStadiumIdFromRoute,
   setCrowdCapacity,
@@ -26,6 +31,7 @@ import {
   stadiumRouteSlug,
   toggleFullscreen,
 } from './stadium/stadium.engine.js';
+import { decodeTifoImage } from './stadium/shared/tifo.js';
 
 @Component({
   selector: 'app-stadium-page',
@@ -40,6 +46,9 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
   private sub: Subscription | null = null;
   private loadSeq = 0;
   private cleanupUi: Array<() => void> = [];
+  private tifoImageData: ImageData | null = null;
+  private tifoObjectUrl: string | null = null;
+  private refreshTifoBlocks: (() => void) | null = null;
 
   ngAfterViewInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -150,6 +159,174 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
       );
     }
 
+    const tifoFile = document.getElementById(
+      'tifo-file',
+    ) as HTMLInputElement | null;
+    const tifoImage = document.getElementById(
+      'tifo-image',
+    ) as HTMLImageElement | null;
+    const tifoImagePreview = tifoImage?.parentElement;
+    const tifoBlocks = document.getElementById('tifo-blocks');
+    const tifoStatus = document.getElementById('tifo-status');
+    const tifoSelectAll = document.getElementById(
+      'tifo-select-all',
+    ) as HTMLButtonElement | null;
+    const tifoPreviewButton = document.getElementById(
+      'tifo-preview-btn',
+    ) as HTMLButtonElement | null;
+    const tifoApplyButton = document.getElementById(
+      'tifo-apply-btn',
+    ) as HTMLButtonElement | null;
+    const tifoCancelButton = document.getElementById(
+      'tifo-cancel-btn',
+    ) as HTMLButtonElement | null;
+    const tifoClearButton = document.getElementById(
+      'tifo-clear-btn',
+    ) as HTMLButtonElement | null;
+    const tifoTemplateButtons = Array.from(
+      document.querySelectorAll<HTMLButtonElement>('[data-tifo-template]'),
+    );
+
+    const selectedTifoBlocks = () =>
+      Array.from(
+        tifoBlocks?.querySelectorAll<HTMLInputElement>(
+          'input[type="checkbox"]:checked',
+        ) || [],
+      ).map((input) => Number(input.value));
+
+    const updateTifoActions = () => {
+      const ready = !!this.tifoImageData && selectedTifoBlocks().length > 0;
+      if (tifoPreviewButton) tifoPreviewButton.disabled = !ready;
+    };
+
+    this.refreshTifoBlocks = () => {
+      if (!tifoBlocks) return;
+      tifoBlocks.replaceChildren();
+      for (const block of listTifoBlocks()) {
+        const label = document.createElement('label');
+        label.className = 'tifo-block';
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.value = String(block.label);
+        input.addEventListener('change', updateTifoActions);
+        const text = document.createElement('span');
+        text.textContent = String(block.label);
+        label.append(input, text);
+        tifoBlocks.append(label);
+      }
+      if (tifoStatus) {
+        tifoStatus.textContent = `${listTifoBlocks().length} blocks available`;
+      }
+      updateTifoActions();
+    };
+
+    const onTifoFile = async () => {
+      const file = tifoFile?.files?.[0];
+      if (!file) return;
+      try {
+        this.tifoImageData = await decodeTifoImage(file);
+        if (this.tifoObjectUrl) URL.revokeObjectURL(this.tifoObjectUrl);
+        this.tifoObjectUrl = URL.createObjectURL(file);
+        if (tifoImage) tifoImage.src = this.tifoObjectUrl;
+        tifoImagePreview?.classList.add('has-image');
+        if (tifoStatus) tifoStatus.textContent = 'Image ready · select blocks';
+        updateTifoActions();
+      } catch (err) {
+        console.error(err);
+        if (tifoStatus) tifoStatus.textContent = 'Could not read this image';
+      }
+    };
+
+    const onTifoSelectAll = () => {
+      const inputs = Array.from(
+        tifoBlocks?.querySelectorAll<HTMLInputElement>(
+          'input[type="checkbox"]',
+        ) || [],
+      );
+      const select = inputs.some((input) => !input.checked);
+      inputs.forEach((input) => (input.checked = select));
+      updateTifoActions();
+    };
+
+    const onTifoTemplate = (event: Event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      const template = new Set(
+        (button.dataset['tifoTemplate'] || '')
+          .split(',')
+          .map(Number)
+          .filter(Number.isFinite),
+      );
+      const inputs = Array.from(
+        tifoBlocks?.querySelectorAll<HTMLInputElement>(
+          'input[type="checkbox"]',
+        ) || [],
+      );
+      inputs.forEach((input) => {
+        input.checked = template.has(Number(input.value));
+      });
+      const selected = selectedTifoBlocks().length;
+      if (tifoStatus) {
+        tifoStatus.textContent = `${selected} template blocks selected`;
+      }
+      updateTifoActions();
+    };
+
+    const onTifoPreview = () => {
+      if (!this.tifoImageData) return;
+      const labels = selectedTifoBlocks();
+      const ok = previewTifo(this.tifoImageData, labels);
+      if (tifoStatus) {
+        tifoStatus.textContent = ok
+          ? `Previewing on ${labels.length} blocks`
+          : 'Select at least one valid block';
+      }
+      if (tifoApplyButton) tifoApplyButton.disabled = !ok;
+      if (tifoCancelButton) tifoCancelButton.disabled = !ok;
+    };
+
+    const onTifoApply = () => {
+      const ok = applyTifo();
+      if (tifoStatus) tifoStatus.textContent = ok ? 'Tifo applied' : 'Preview first';
+      if (tifoApplyButton) tifoApplyButton.disabled = true;
+      if (tifoCancelButton) tifoCancelButton.disabled = true;
+    };
+
+    const onTifoCancel = () => {
+      cancelTifo();
+      if (tifoStatus) tifoStatus.textContent = 'Preview cancelled';
+      if (tifoApplyButton) tifoApplyButton.disabled = true;
+      if (tifoCancelButton) tifoCancelButton.disabled = true;
+    };
+
+    const onTifoClear = () => {
+      clearTifo();
+      if (tifoStatus) tifoStatus.textContent = 'Tifo cleared';
+      if (tifoApplyButton) tifoApplyButton.disabled = true;
+      if (tifoCancelButton) tifoCancelButton.disabled = true;
+    };
+
+    tifoFile?.addEventListener('change', onTifoFile);
+    tifoSelectAll?.addEventListener('click', onTifoSelectAll);
+    tifoTemplateButtons.forEach((button) =>
+      button.addEventListener('click', onTifoTemplate),
+    );
+    tifoPreviewButton?.addEventListener('click', onTifoPreview);
+    tifoApplyButton?.addEventListener('click', onTifoApply);
+    tifoCancelButton?.addEventListener('click', onTifoCancel);
+    tifoClearButton?.addEventListener('click', onTifoClear);
+    this.cleanupUi.push(() => {
+      tifoFile?.removeEventListener('change', onTifoFile);
+      tifoSelectAll?.removeEventListener('click', onTifoSelectAll);
+      tifoTemplateButtons.forEach((button) =>
+        button.removeEventListener('click', onTifoTemplate),
+      );
+      tifoPreviewButton?.removeEventListener('click', onTifoPreview);
+      tifoApplyButton?.removeEventListener('click', onTifoApply);
+      tifoCancelButton?.removeEventListener('click', onTifoCancel);
+      tifoClearButton?.removeEventListener('click', onTifoClear);
+      if (this.tifoObjectUrl) URL.revokeObjectURL(this.tifoObjectUrl);
+    });
+
     const paintTarget = (currentId: string) => {
       const next = getStadiumMeta(otherStadiumId(currentId));
       if (!next) return;
@@ -212,6 +389,7 @@ export class StadiumPage implements AfterViewInit, OnDestroy {
     try {
       await initStadium(id);
       if (seq !== this.loadSeq) return;
+      this.refreshTifoBlocks?.();
       if (seatLink) {
         openSeat(seatLink, { fly: seatLink.fly });
       }

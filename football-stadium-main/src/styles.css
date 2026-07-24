@@ -530,6 +530,171 @@ body.stadium-draft #rightcol {
   pointer-events: auto;
 }
 
+#tifo-card {
+  padding: 14px 15px;
+}
+#tifo-card header {
+  margin-bottom: 10px;
+}
+.tifo-subtitle {
+  margin-top: 3px;
+  color: var(--dim);
+  font-size: 10px;
+}
+.tifo-upload {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  border: 1px dashed var(--accent-2);
+  border-radius: 9px;
+  background: rgba(25, 183, 255, 0.08);
+  color: var(--accent-2);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.tifo-upload input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.tifo-image-help {
+  margin-top: 5px;
+  color: var(--dim);
+  font-size: 8px;
+  text-align: center;
+}
+.tifo-image-preview {
+  position: relative;
+  height: 76px;
+  margin-top: 9px;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #0a2740;
+  display: grid;
+  place-items: center;
+}
+.tifo-image-preview img {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.tifo-image-preview.has-image img {
+  display: block;
+}
+.tifo-image-preview.has-image span {
+  display: none;
+}
+.tifo-image-preview span {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10px;
+}
+.tifo-block-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  color: var(--dim);
+  font-size: 10px;
+  font-weight: 800;
+}
+#tifo-select-all {
+  border: 0;
+  background: transparent;
+  color: var(--accent-2);
+  font-size: 10px;
+  font-weight: 800;
+}
+.tifo-templates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 7px;
+}
+.tifo-templates button {
+  min-height: 27px;
+  padding: 4px 5px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper-2);
+  color: var(--dim);
+  font-size: 8px;
+  font-weight: 800;
+}
+.tifo-templates button:last-child {
+  grid-column: 1 / -1;
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+}
+.tifo-templates button:hover {
+  background: rgba(25, 183, 255, 0.1);
+}
+.tifo-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  max-height: 82px;
+  margin-top: 7px;
+  overflow-y: auto;
+}
+.tifo-block {
+  position: relative;
+}
+.tifo-block input {
+  position: absolute;
+  opacity: 0;
+}
+.tifo-block span {
+  display: block;
+  min-width: 40px;
+  padding: 5px 7px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper-2);
+  color: var(--dim);
+  font: 700 9px var(--mono);
+  text-align: center;
+  cursor: pointer;
+}
+.tifo-block input:checked + span {
+  border-color: var(--accent-2);
+  background: var(--accent-2);
+  color: #fff;
+}
+.tifo-status {
+  min-height: 14px;
+  margin-top: 8px;
+  color: var(--dim);
+  font-size: 9px;
+}
+.tifo-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-top: 8px;
+}
+.tifo-actions button {
+  min-width: 0;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: 9px;
+  font-weight: 800;
+}
+.tifo-actions button:first-child,
+.tifo-actions button:nth-child(2) {
+  background: var(--accent-2);
+  color: #fff;
+}
+.tifo-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 #overview {
   padding: 14px 15px;
 }
